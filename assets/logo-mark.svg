@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Símbolo DEVER</title>
+  <desc id="desc">Símbolo geométrico industrial baseado na letra D.</desc>
+  <g fill="none" fill-rule="evenodd">
+    <path d="M32 2 56 15.5v33L32 62 8 48.5v-33L32 2Z" stroke="#D8D2C8" stroke-width="2.6"/>
+    <path d="M32 9.5 49.2 19.3v25.4L32 54.5 14.8 44.7V19.3L32 9.5Z" stroke="#D8D2C8" stroke-opacity=".42" stroke-width="1"/>
+    <path d="M22 18h12.7c8.8 0 14.8 5.8 14.8 14s-6 14-14.8 14H22V18Z" stroke="#D8D2C8" stroke-width="5.8" stroke-linejoin="bevel"/>
+    <path d="M22 18v28" stroke="#0D0D0D" stroke-width="6.4"/>
+    <path d="M17 24.5 31.5 31 17 37.5v-13Z" fill="#D8D2C8"/>
+    <path d="m26.2 51 22.4-12.9v9.7L32 57.2 16.8 49l9.4 2Z" fill="#A6402D"/>
+  </g>
+</svg>
