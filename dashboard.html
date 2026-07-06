@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Dashboard do aluno da DEVER." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0D0D0D" />
+    <title>Área do aluno | DEVER</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/css/app.css" />
+  </head>
+  <body class="app-body">
+    <header class="app-header">
+      <div class="app-container app-header-inner">
+        <a class="app-brand" href="index.html" aria-label="DEVER">
+          <img src="assets/logo.svg" alt="DEVER" width="214" height="58" />
+        </a>
+        <nav class="app-nav" aria-label="Área do aluno">
+          <a href="dashboard.html">Meus cursos</a>
+          <button type="button" data-logout>Sair</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="app-container dashboard-grid">
+        <aside class="profile-panel">
+          <p class="app-kicker">Conta</p>
+          <h1 data-user-name>Carregando...</h1>
+          <p data-user-email></p>
+          <span class="role-badge" data-user-role>Perfil: estudante</span>
+        </aside>
+
+        <section class="content-panel" aria-labelledby="courses-title">
+          <p class="app-kicker">Meus cursos</p>
+          <h2 id="courses-title">Cursos inscritos</h2>
+          <p class="empty-state" role="status" aria-live="polite" hidden data-empty-courses>
+            Você ainda não está inscrito em nenhum curso.
+          </p>
+          <div class="course-list" data-course-list></div>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="assets/js/dashboard.js"></script>
+  </body>
+</html>

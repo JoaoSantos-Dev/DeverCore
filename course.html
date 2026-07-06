@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Área de curso da DEVER." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0D0D0D" />
+    <title>Curso | DEVER</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/css/app.css" />
+  </head>
+  <body class="app-body">
+    <header class="app-header">
+      <div class="app-container app-header-inner">
+        <a class="app-brand" href="dashboard.html" aria-label="DEVER">
+          <img src="assets/logo.svg" alt="DEVER" width="214" height="58" />
+        </a>
+        <nav class="app-nav" aria-label="Área do aluno">
+          <a href="dashboard.html">Meus cursos</a>
+          <button type="button" data-logout>Sair</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="app-container course-shell">
+        <header class="course-hero" data-course-hero>
+          <p class="app-kicker">Curso</p>
+          <h1 data-course-title>Carregando curso...</h1>
+          <p data-course-description></p>
+          <span class="role-badge" data-course-progress>Status: carregando</span>
+        </header>
+
+        <p class="empty-state" role="status" aria-live="polite" hidden data-course-state></p>
+
+        <div class="course-layout" data-course-content>
+          <aside class="module-sidebar" aria-label="Módulos e aulas">
+            <p class="app-kicker">Módulos</p>
+            <div data-module-list></div>
+          </aside>
+
+          <article class="lesson-panel" data-lesson-content>
+            <div class="lesson-placeholder">
+              Selecione uma aula para começar.
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="assets/js/course.js"></script>
+  </body>
+</html>

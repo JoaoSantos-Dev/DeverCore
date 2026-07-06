@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Área do aluno da DEVER para acessar cursos e aulas." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0D0D0D" />
+    <title>Entrar | DEVER</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/css/app.css" />
+  </head>
+  <body class="app-body auth-body">
+    <main class="auth-shell">
+      <section class="auth-card" aria-labelledby="login-title">
+        <a class="app-brand auth-brand" href="index.html" aria-label="DEVER">
+          <img src="assets/logo.svg" alt="DEVER" width="214" height="58" />
+        </a>
+
+        <p class="app-kicker">Área do aluno</p>
+        <h1 id="login-title">Entrar na conta</h1>
+        <p class="auth-copy">
+          Acesse seus cursos, módulos e aulas disponíveis na DEVER.
+        </p>
+
+        <form class="app-form" aria-describedby="login-message" data-login-form>
+          <div class="app-field">
+            <label for="email">E-mail</label>
+            <input id="email" type="email" autocomplete="email" required data-email />
+          </div>
+          <div class="app-field">
+            <label for="password">Senha</label>
+            <input id="password" type="password" autocomplete="current-password" required data-password />
+          </div>
+          <button class="app-button app-button-primary" type="submit" data-login-submit>
+            Entrar
+          </button>
+          <p class="app-message" id="login-message" role="status" aria-live="polite" data-login-message></p>
+        </form>
+
+        <a class="app-button app-button-secondary" href="index.html">Voltar para o site</a>
+      </section>
+    </main>
+
+    <script type="module" src="assets/js/login.js"></script>
+  </body>
+</html>

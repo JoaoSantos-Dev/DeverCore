@@ -253,12 +253,13 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 28px;
+  gap: clamp(14px, 2vw, 28px);
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .primary-nav a,
@@ -1120,6 +1121,19 @@ button {
 }
 
 @media (max-width: 1060px) {
+  .header-inner {
+    gap: 16px;
+  }
+
+  .primary-nav {
+    font-size: 0.72rem;
+  }
+
+  .header-cta {
+    padding: 0 14px;
+    font-size: 0.72rem;
+  }
+
   .two-column,
   .result-layout,
   .brand-layout,
