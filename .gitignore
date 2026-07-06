@@ -1,0 +1,40 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
+*.local
+*serviceAccount*.json
+*service-account*.json
+*firebase-adminsdk*.json
+credentials*.json
+
+# Node / package managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Firebase local output
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+database-debug.log*
+storage-debug.log*
+ui-debug.log*
+firebase-export-*/
+
+# Local cache / temp / reports
+.cache/
+.tmp/
+tmp/
+coverage/
+*.log
