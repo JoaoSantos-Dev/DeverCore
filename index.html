@@ -7,6 +7,32 @@
       name="description"
       content="Turma Fundadora da DEVER: treinamento prático para finalizar seu primeiro jogo 2D na Unity em 4 semanas."
     />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="DEVER" />
+    <meta name="theme-color" content="#0D0D0D" />
+    <link rel="canonical" href="https://devercore.com/" />
+
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DEVER" />
+    <meta property="og:title" content="DEVER | Turma Fundadora Unity 2D" />
+    <meta
+      property="og:description"
+      content="Treinamento prático para iniciantes criarem seu primeiro jogo 2D completo na Unity."
+    />
+    <meta property="og:url" content="https://devercore.com/" />
+    <meta property="og:image" content="https://devercore.com/assets/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="DEVER - Turma Fundadora Unity 2D" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DEVER | Turma Fundadora Unity 2D" />
+    <meta
+      name="twitter:description"
+      content="Treinamento prático para iniciantes criarem seu primeiro jogo 2D completo na Unity."
+    />
+    <meta name="twitter:image" content="https://devercore.com/assets/og-image.png" />
     <title>DEVER | Turma Fundadora Unity 2D</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,11 +44,12 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <a class="skip-link" href="#top">Pular para o conteúdo</a>
     <div class="site-shell">
       <header class="site-header" data-header>
         <div class="container header-inner">
           <a class="brand" href="#top" aria-label="DEVER - Treinamento prático em jogos">
-            <img src="assets/logo.svg" alt="DEVER" class="brand-logo" />
+            <img src="assets/logo.svg" alt="DEVER" width="214" height="58" class="brand-logo" />
           </a>
 
           <button
@@ -33,12 +60,12 @@
             aria-controls="primary-navigation"
             data-menu-toggle
           >
-            <span></span>
-            <span></span>
-            <span></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
           </button>
 
-          <nav class="primary-nav" id="primary-navigation" data-nav>
+          <nav class="primary-nav" id="primary-navigation" aria-label="Navegação principal" data-nav>
             <a href="#curso">Treinamento</a>
             <a href="#conteudo">Plano</a>
             <a href="#publico">Perfil</a>
@@ -49,7 +76,7 @@
         </div>
       </header>
 
-      <main id="top">
+      <main id="top" tabindex="-1">
         <section class="hero industrial-zone">
           <div class="container hero-grid">
             <div class="hero-copy" data-reveal>
@@ -370,7 +397,7 @@
               </p>
             </div>
 
-            <form class="interest-form" data-form data-reveal>
+            <form class="interest-form" aria-describedby="form-message" data-form data-reveal>
               <div class="form-row">
                 <label for="name">Nome</label>
                 <input id="name" name="name" type="text" autocomplete="name" required />
@@ -393,7 +420,7 @@
               <button class="btn btn-primary form-submit" type="submit">
                 Registrar interesse
               </button>
-              <p class="form-message" data-form-message aria-live="polite"></p>
+              <p class="form-message" id="form-message" role="status" data-form-message aria-live="polite"></p>
             </form>
           </div>
         </section>
