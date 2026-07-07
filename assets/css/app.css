@@ -495,6 +495,13 @@ input {
   min-width: 0;
 }
 
+.admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
 .admin-card,
 .admin-panel,
 .admin-course-item {
@@ -530,6 +537,15 @@ input {
   font-size: 0.72rem;
 }
 
+.admin-summary-card {
+  min-height: auto;
+}
+
+.admin-summary-card h2 {
+  color: var(--text-main);
+  font-size: clamp(2rem, 4vw, 3.1rem);
+}
+
 .status-pill {
   display: inline-flex;
   width: fit-content;
@@ -550,6 +566,7 @@ input {
 
 .admin-panel[hidden],
 .admin-content[hidden],
+.admin-course-layout[hidden],
 .access-denied-panel[hidden],
 .admin-access-card[hidden] {
   display: none;
@@ -561,6 +578,86 @@ input {
   justify-content: space-between;
   gap: 18px;
   min-width: 0;
+}
+
+.admin-course-hero {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-course-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.admin-course-meta span {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-course-layout {
+  display: grid;
+  grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  min-width: 0;
+}
+
+.admin-course-nav {
+  position: sticky;
+  top: 102px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  border-left: 3px solid var(--red-duty);
+  background: rgba(13, 13, 13, 0.56);
+}
+
+.admin-tab-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  background: rgba(8, 8, 8, 0.34);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.admin-tab-button:hover,
+.admin-tab-button:focus-visible,
+.admin-tab-button.is-active {
+  border-color: rgba(194, 138, 59, 0.48);
+  color: var(--text-main);
+  outline: none;
+}
+
+.admin-course-panels,
+.admin-module-list,
+.admin-lesson-list {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.course-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .admin-course-list {
@@ -698,6 +795,10 @@ input {
   background: rgba(13, 13, 13, 0.48);
 }
 
+.admin-course-item.compact {
+  padding: 16px;
+}
+
 .admin-course-item > span {
   color: var(--amber-metal);
   font-family: var(--font-mono);
@@ -740,6 +841,62 @@ input {
 .admin-preview {
   padding: 18px;
   box-shadow: none;
+}
+
+.admin-module-block {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  border-left: 3px solid var(--red-duty);
+  background: rgba(13, 13, 13, 0.48);
+}
+
+.admin-module-header,
+.admin-lesson-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: start;
+  min-width: 0;
+}
+
+.admin-module-header > .admin-course-meta {
+  justify-content: flex-start;
+}
+
+.admin-module-header h3 {
+  margin-top: 5px;
+}
+
+.admin-module-header p,
+.admin-lesson-row p {
+  margin: 8px 0 0;
+}
+
+.admin-module-header span,
+.admin-lesson-row span {
+  color: var(--amber-metal);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-lesson-row {
+  padding: 14px;
+  border: 1px solid rgba(216, 210, 200, 0.1);
+  background: rgba(8, 8, 8, 0.3);
+}
+
+.admin-lesson-row strong {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-title);
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .course-shell {
@@ -879,8 +1036,22 @@ input {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .admin-summary-grid,
+  .course-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-panel-header {
     display: grid;
+  }
+
+  .admin-course-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-course-nav {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .admin-split,
@@ -949,9 +1120,16 @@ input {
     grid-template-columns: 1fr;
   }
 
+  .admin-summary-grid,
+  .course-summary-grid,
+  .admin-course-nav {
+    grid-template-columns: 1fr;
+  }
+
   .admin-card,
   .admin-panel,
-  .admin-course-item {
+  .admin-course-item,
+  .admin-module-block {
     padding: 18px;
   }
 
@@ -962,6 +1140,11 @@ input {
 
   .admin-actions .app-button {
     width: 100%;
+  }
+
+  .admin-module-header,
+  .admin-lesson-row {
+    grid-template-columns: 1fr;
   }
 
   .profile-panel h1 {

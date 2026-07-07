@@ -34,7 +34,7 @@
         <header class="course-hero admin-hero">
           <p class="app-kicker">Admin</p>
           <h1>Painel administrativo</h1>
-          <p>Gerenciamento interno da DEVER.</p>
+          <p>Gerencie cursos e entre em cada treinamento para editar conteúdos, alunos, preços e certificados.</p>
           <span class="role-badge" data-admin-profile>Carregando dados...</span>
         </header>
 
@@ -52,66 +52,33 @@
         </section>
 
         <div class="admin-content" hidden data-admin-content>
-          <section class="admin-grid" aria-label="Recursos administrativos">
-            <article class="admin-card">
-              <span class="status-pill">Ativo</span>
-              <h2>Cursos</h2>
-              <p>Criar, editar e organizar treinamentos.</p>
-              <button class="app-button" type="button" data-admin-panel-target="courses">
-                Gerenciar cursos
-              </button>
+          <section class="admin-summary-grid" aria-label="Resumo administrativo">
+            <article class="admin-card admin-summary-card">
+              <span class="status-pill">Cursos</span>
+              <h2 data-summary-courses>0</h2>
+              <p>Total cadastrado</p>
             </article>
-
-            <article class="admin-card">
-              <span class="status-pill">Ativo</span>
-              <h2>Alunos</h2>
-              <p>Adicionar perfis, roles e status de acesso.</p>
-              <button class="app-button" type="button" data-admin-panel-target="students">
-                Gerenciar alunos
-              </button>
+            <article class="admin-card admin-summary-card">
+              <span class="status-pill">Ativos</span>
+              <h2 data-summary-active-courses>0</h2>
+              <p>Cursos liberados</p>
             </article>
-
-            <article class="admin-card">
-              <span class="status-pill">Ativo</span>
-              <h2>Conteúdos</h2>
-              <p>Organizar módulos, aulas, textos, vídeos externos e links.</p>
-              <button class="app-button" type="button" data-admin-panel-target="content">
-                Gerenciar conteúdos
-              </button>
+            <article class="admin-card admin-summary-card">
+              <span class="status-pill">Alunos</span>
+              <h2 data-summary-users>0</h2>
+              <p>Perfis Firestore</p>
             </article>
-
-            <article class="admin-card">
-              <span class="status-pill">Ativo</span>
-              <h2>Matrículas</h2>
-              <p>Matricular alunos e remover acesso sem apagar histórico.</p>
-              <button class="app-button" type="button" data-admin-panel-target="enrollments">
-                Gerenciar matrículas
-              </button>
-            </article>
-
-            <article class="admin-card">
-              <span class="status-pill">Ativo</span>
-              <h2>Preços</h2>
-              <p>Definir preço, promoção, visibilidade e link de pagamento.</p>
-              <button class="app-button" type="button" data-admin-panel-target="pricing">
-                Gerenciar preços
-              </button>
-            </article>
-
-            <article class="admin-card">
-              <span class="status-pill">Manual</span>
-              <h2>Certificados</h2>
-              <p>Registrar certificados emitidos manualmente.</p>
-              <button class="app-button" type="button" data-admin-panel-target="certificates">
-                Gerenciar certificados
-              </button>
+            <article class="admin-card admin-summary-card">
+              <span class="status-pill">Matrículas</span>
+              <h2 data-summary-enrollments>0</h2>
+              <p>Acessos ativos</p>
             </article>
           </section>
 
-          <section class="admin-panel is-active" data-admin-panel="courses">
+          <section class="admin-panel is-active" data-admin-section="courses">
             <div class="admin-panel-header">
               <div>
-                <p class="app-kicker">Gerenciamento de cursos</p>
+                <p class="app-kicker">Cursos</p>
                 <h2>Cursos cadastrados</h2>
               </div>
               <button class="app-button" type="button" data-course-new>Novo curso</button>
@@ -174,16 +141,16 @@
             <div class="admin-list" data-admin-course-list></div>
           </section>
 
-          <section class="admin-panel" hidden data-admin-panel="students">
+          <section class="admin-panel">
             <div class="admin-panel-header">
               <div>
-                <p class="app-kicker">Gerenciamento de alunos</p>
-                <h2>Perfis Firestore</h2>
+                <p class="app-kicker">Base de alunos</p>
+                <h2>Perfis de alunos</h2>
               </div>
               <button class="app-button" type="button" data-user-new>Novo perfil</button>
             </div>
             <p class="admin-note">
-              Crie primeiro o usuário no Firebase Authentication e cole o UID aqui.
+              Crie o usuário no Firebase Authentication e cadastre o perfil aqui. As matrículas ficam dentro de cada curso.
             </p>
 
             <form class="admin-form" data-user-form>
@@ -225,192 +192,6 @@
               Carregando dados...
             </p>
             <div class="admin-list" data-admin-user-list></div>
-          </section>
-
-          <section class="admin-panel" hidden data-admin-panel="content">
-            <div class="admin-panel-header">
-              <div>
-                <p class="app-kicker">Gerenciamento de conteúdos</p>
-                <h2>Módulos e aulas</h2>
-              </div>
-            </div>
-
-            <div class="admin-form-grid compact">
-              <label>
-                <span>Curso</span>
-                <select data-content-course></select>
-              </label>
-              <label>
-                <span>Módulo</span>
-                <select data-content-module></select>
-              </label>
-            </div>
-
-            <div class="admin-split">
-              <section class="admin-subpanel">
-                <div class="admin-panel-header">
-                  <div>
-                    <p class="app-kicker">Módulos</p>
-                    <h3>Organização do curso</h3>
-                  </div>
-                  <button class="app-button" type="button" data-module-new>Novo módulo</button>
-                </div>
-                <form class="admin-form" data-module-form>
-                  <input type="hidden" data-module-edit-id />
-                  <div class="admin-form-grid compact">
-                    <label>
-                      <span>Título</span>
-                      <input type="text" required data-module-title />
-                    </label>
-                    <label>
-                      <span>Ordem</span>
-                      <input type="number" step="1" value="1" data-module-order />
-                    </label>
-                    <label class="span-2">
-                      <span>Descrição</span>
-                      <textarea rows="3" data-module-description></textarea>
-                    </label>
-                    <label class="check-field">
-                      <input type="checkbox" checked data-module-active />
-                      <span>Ativo</span>
-                    </label>
-                  </div>
-                  <div class="admin-actions">
-                    <button class="app-button app-button-primary" type="submit">Salvar módulo</button>
-                    <button class="app-button" type="button" data-module-cancel>Cancelar</button>
-                  </div>
-                  <p class="app-message" role="status" aria-live="polite" data-module-message></p>
-                </form>
-                <div class="admin-list" data-admin-module-list></div>
-              </section>
-
-              <section class="admin-subpanel">
-                <div class="admin-panel-header">
-                  <div>
-                    <p class="app-kicker">Aulas</p>
-                    <h3>Conteúdo publicado</h3>
-                  </div>
-                  <button class="app-button" type="button" data-lesson-new>Nova aula</button>
-                </div>
-                <form class="admin-form" data-lesson-form>
-                  <input type="hidden" data-lesson-edit-id />
-                  <div class="admin-form-grid compact">
-                    <label>
-                      <span>Título</span>
-                      <input type="text" required data-lesson-title />
-                    </label>
-                    <label>
-                      <span>Tipo</span>
-                      <select data-lesson-type>
-                        <option value="text">text</option>
-                        <option value="image">image</option>
-                        <option value="video">video</option>
-                        <option value="live">live</option>
-                        <option value="link">link</option>
-                      </select>
-                    </label>
-                    <label>
-                      <span>Ordem</span>
-                      <input type="number" step="1" value="1" data-lesson-order />
-                    </label>
-                    <label>
-                      <span>URL externa</span>
-                      <input type="url" data-lesson-media-url />
-                    </label>
-                    <label class="span-2">
-                      <span>Conteúdo / descrição</span>
-                      <textarea rows="5" data-lesson-content></textarea>
-                    </label>
-                    <label class="check-field">
-                      <input type="checkbox" checked data-lesson-published />
-                      <span>Publicada</span>
-                    </label>
-                  </div>
-                  <div class="admin-actions">
-                    <button class="app-button app-button-primary" type="submit">Salvar aula</button>
-                    <button class="app-button" type="button" data-lesson-cancel>Cancelar</button>
-                    <button class="app-button" type="button" data-lesson-preview-button>Preview</button>
-                  </div>
-                  <p class="app-message" role="status" aria-live="polite" data-lesson-message></p>
-                </form>
-                <div class="lesson-panel admin-preview" data-lesson-preview>
-                  <p class="lesson-placeholder">Preview da aula.</p>
-                </div>
-                <div class="admin-list" data-admin-lesson-list></div>
-              </section>
-            </div>
-          </section>
-
-          <section class="admin-panel" hidden data-admin-panel="enrollments">
-            <div class="admin-panel-header">
-              <div>
-                <p class="app-kicker">Matrículas</p>
-                <h2>Acessos de alunos</h2>
-              </div>
-            </div>
-
-            <form class="admin-form" data-enrollment-form>
-              <div class="admin-form-grid">
-                <label>
-                  <span>Aluno</span>
-                  <select required data-enrollment-user></select>
-                </label>
-                <label>
-                  <span>Curso</span>
-                  <select required data-enrollment-course></select>
-                </label>
-              </div>
-              <div class="admin-actions">
-                <button class="app-button app-button-primary" type="submit">Matricular</button>
-              </div>
-              <p class="app-message" role="status" aria-live="polite" data-enrollment-message></p>
-            </form>
-
-            <p class="empty-state" role="status" aria-live="polite" data-admin-enrollments-state>
-              Carregando dados...
-            </p>
-            <div class="admin-list" data-admin-enrollment-list></div>
-          </section>
-
-          <section class="admin-panel" hidden data-admin-panel="pricing">
-            <div class="admin-panel-header">
-              <div>
-                <p class="app-kicker">Preços</p>
-                <h2>Dados comerciais</h2>
-              </div>
-            </div>
-            <p class="admin-note">Os preços são salvos nos documentos de cursos.</p>
-            <div class="admin-list" data-admin-price-list></div>
-            <p class="app-message" role="status" aria-live="polite" data-price-message></p>
-          </section>
-
-          <section class="admin-panel" hidden data-admin-panel="certificates">
-            <div class="admin-panel-header">
-              <div>
-                <p class="app-kicker">Certificados</p>
-                <h2>Registro manual</h2>
-              </div>
-            </div>
-            <form class="admin-form" data-certificate-form>
-              <div class="admin-form-grid">
-                <label>
-                  <span>Aluno</span>
-                  <select required data-certificate-user></select>
-                </label>
-                <label>
-                  <span>Curso</span>
-                  <select required data-certificate-course></select>
-                </label>
-              </div>
-              <div class="admin-actions">
-                <button class="app-button app-button-primary" type="submit">Criar certificado</button>
-              </div>
-              <p class="app-message" role="status" aria-live="polite" data-certificate-message></p>
-            </form>
-            <p class="empty-state" role="status" aria-live="polite" data-admin-certificates-state>
-              Carregando dados...
-            </p>
-            <div class="admin-list" data-admin-certificate-list></div>
           </section>
         </div>
       </section>

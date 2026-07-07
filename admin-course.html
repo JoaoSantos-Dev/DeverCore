@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Gerenciamento de curso da DEVER." />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0D0D0D" />
+    <title>Gerenciar Curso | DEVER</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/css/app.css" />
+  </head>
+  <body class="app-body">
+    <header class="app-header">
+      <div class="app-container app-header-inner">
+        <a class="app-brand" href="admin.html" aria-label="DEVER">
+          <img src="assets/logo.svg" alt="DEVER" width="214" height="58" />
+        </a>
+        <nav class="app-nav" aria-label="Administração do curso">
+          <a href="admin.html">Voltar ao Admin</a>
+          <a href="dashboard.html">Dashboard</a>
+          <button type="button" data-logout>Sair</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="app-container admin-shell">
+        <header class="course-hero admin-course-hero" data-course-hero>
+          <p class="app-kicker">Curso</p>
+          <h1 data-course-title>Carregando curso...</h1>
+          <p data-course-description></p>
+          <div class="admin-course-meta" data-course-meta></div>
+          <div class="admin-actions">
+            <a class="app-button" href="#" data-student-view>Ver como aluno</a>
+            <a class="app-button app-button-secondary" href="admin.html">Voltar ao painel</a>
+          </div>
+        </header>
+
+        <p class="empty-state" role="status" aria-live="polite" data-admin-state>
+          Carregando dados...
+        </p>
+
+        <section class="content-panel access-denied-panel" hidden data-admin-denied>
+          <p class="app-kicker">Acesso restrito</p>
+          <h2>Você não tem permissão para acessar esta área.</h2>
+          <p data-admin-denied-message>
+            Você não tem permissão para acessar esta área.
+          </p>
+          <a class="app-button app-button-secondary" href="dashboard.html">Voltar ao dashboard</a>
+        </section>
+
+        <div class="admin-course-layout" hidden data-admin-content>
+          <aside class="admin-course-nav" aria-label="Navegação do curso">
+            <button class="admin-tab-button is-active" type="button" data-course-tab-target="overview">
+              Visão geral
+            </button>
+            <button class="admin-tab-button" type="button" data-course-tab-target="content">
+              Conteúdos
+            </button>
+            <button class="admin-tab-button" type="button" data-course-tab-target="students">
+              Alunos e matrículas
+            </button>
+            <button class="admin-tab-button" type="button" data-course-tab-target="pricing">
+              Preços
+            </button>
+            <button class="admin-tab-button" type="button" data-course-tab-target="certificates">
+              Certificados
+            </button>
+            <button class="admin-tab-button" type="button" data-course-tab-target="settings">
+              Configurações
+            </button>
+          </aside>
+
+          <div class="admin-course-panels">
+            <section class="admin-panel is-active" data-course-panel="overview">
+              <div class="admin-panel-header">
+                <div>
+                  <p class="app-kicker">Visão geral</p>
+                  <h2>Dados principais</h2>
+                </div>
+              </div>
+
+              <div class="admin-summary-grid course-summary-grid">
+                <article class="admin-card admin-summary-card">
+                  <span class="status-pill">Módulos</span>
+                  <h2 data-summary-modules>0</h2>
+                  <p>Blocos do curso</p>
+                </article>
+                <article class="admin-card admin-summary-card">
+                  <span class="status-pill">Aulas</span>
+                  <h2 data-summary-lessons>0</h2>
+                  <p>Conteúdos cadastrados</p>
+                </article>
+                <article class="admin-card admin-summary-card">
+                  <span class="status-pill">Alunos</span>
+                  <h2 data-summary-students>0</h2>
+                  <p>Matrículas ativas</p>
+                </article>
+                <article class="admin-card admin-summary-card">
+                  <span class="status-pill">Preço</span>
+                  <h2 data-summary-price>--</h2>
+                  <p>Valor atual</p>
+                </article>
+              </div>
+
+              <form class="admin-form" data-overview-form>
+                <div class="admin-form-grid">
+                  <label>
+                    <span>Título</span>
+                    <input type="text" required data-overview-title />
+                  </label>
+                  <label>
+                    <span>Slug / ID</span>
+                    <input type="text" readonly data-overview-id />
+                  </label>
+                  <label class="span-2">
+                    <span>Descrição</span>
+                    <textarea rows="4" data-overview-description></textarea>
+                  </label>
+                  <label>
+                    <span>Ordem</span>
+                    <input type="number" step="1" data-overview-order />
+                  </label>
+                  <label class="check-field">
+                    <input type="checkbox" data-overview-active />
+                    <span>Ativo</span>
+                  </label>
+                  <label class="check-field">
+                    <input type="checkbox" data-overview-visible />
+                    <span>Visível</span>
+                  </label>
+                </div>
+                <div class="admin-actions">
+                  <button class="app-button app-button-primary" type="submit">Salvar dados do curso</button>
+                </div>
+                <p class="app-message" role="status" aria-live="polite" data-overview-message></p>
+              </form>
+            </section>
+
+            <section class="admin-panel" hidden data-course-panel="content">
+              <div class="admin-panel-header">
+                <div>
+                  <p class="app-kicker">Conteúdos do curso</p>
+                  <h2>Módulos e aulas</h2>
+                </div>
+                <button class="app-button" type="button" data-module-new>Novo módulo</button>
+              </div>
+
+              <div class="admin-split">
+                <section class="admin-subpanel">
+                  <div class="admin-panel-header">
+                    <div>
+                      <p class="app-kicker">Módulo</p>
+                      <h3>Organização</h3>
+                    </div>
+                  </div>
+                  <form class="admin-form" data-module-form>
+                    <input type="hidden" data-module-edit-id />
+                    <div class="admin-form-grid compact">
+                      <label>
+                        <span>Título</span>
+                        <input type="text" required data-module-title />
+                      </label>
+                      <label>
+                        <span>Ordem</span>
+                        <input type="number" step="1" value="1" data-module-order />
+                      </label>
+                      <label class="span-2">
+                        <span>Descrição</span>
+                        <textarea rows="3" data-module-description></textarea>
+                      </label>
+                      <label class="check-field">
+                        <input type="checkbox" checked data-module-active />
+                        <span>Ativo</span>
+                      </label>
+                    </div>
+                    <div class="admin-actions">
+                      <button class="app-button app-button-primary" type="submit">Salvar módulo</button>
+                      <button class="app-button" type="button" data-module-cancel>Cancelar</button>
+                    </div>
+                    <p class="app-message" role="status" aria-live="polite" data-module-message></p>
+                  </form>
+                </section>
+
+                <section class="admin-subpanel">
+                  <div class="admin-panel-header">
+                    <div>
+                      <p class="app-kicker">Aula</p>
+                      <h3 data-selected-module-label>Selecione um módulo</h3>
+                    </div>
+                  </div>
+                  <form class="admin-form" data-lesson-form>
+                    <input type="hidden" data-lesson-edit-id />
+                    <div class="admin-form-grid compact">
+                      <label>
+                        <span>Título</span>
+                        <input type="text" required data-lesson-title />
+                      </label>
+                      <label>
+                        <span>Tipo</span>
+                        <select data-lesson-type>
+                          <option value="text">text</option>
+                          <option value="image">image</option>
+                          <option value="video">video</option>
+                          <option value="live">live</option>
+                          <option value="link">link</option>
+                        </select>
+                      </label>
+                      <label>
+                        <span>Ordem</span>
+                        <input type="number" step="1" value="1" data-lesson-order />
+                      </label>
+                      <label>
+                        <span>URL externa</span>
+                        <input type="url" data-lesson-media-url />
+                      </label>
+                      <label class="span-2">
+                        <span>Conteúdo / descrição</span>
+                        <textarea rows="5" data-lesson-content></textarea>
+                      </label>
+                      <label class="check-field">
+                        <input type="checkbox" checked data-lesson-published />
+                        <span>Publicada</span>
+                      </label>
+                    </div>
+                    <div class="admin-actions">
+                      <button class="app-button app-button-primary" type="submit">Salvar aula</button>
+                      <button class="app-button" type="button" data-lesson-cancel>Cancelar</button>
+                      <button class="app-button" type="button" data-lesson-preview-button>Preview</button>
+                    </div>
+                    <p class="app-message" role="status" aria-live="polite" data-lesson-message></p>
+                  </form>
+                  <div class="lesson-panel admin-preview" data-lesson-preview>
+                    <p class="lesson-placeholder">Preview da aula.</p>
+                  </div>
+                </section>
+              </div>
+
+              <div class="admin-module-list" data-admin-module-list></div>
+            </section>
+
+            <section class="admin-panel" hidden data-course-panel="students">
+              <div class="admin-panel-header">
+                <div>
+                  <p class="app-kicker">Alunos e matrículas</p>
+                  <h2>Acessos deste curso</h2>
+                </div>
+              </div>
+
+              <form class="admin-form" data-enrollment-form>
+                <div class="admin-form-grid">
+                  <label>
+                    <span>Aluno existente</span>
+                    <select required data-enrollment-user></select>
+                  </label>
+                </div>
+                <div class="admin-actions">
+                  <button class="app-button app-button-primary" type="submit">Matricular aluno</button>
+                </div>
+                <p class="app-message" role="status" aria-live="polite" data-enrollment-message></p>
+              </form>
+
+              <p class="empty-state" role="status" aria-live="polite" data-enrollment-state>
+                Carregando dados...
+              </p>
+              <div class="admin-list" data-enrollment-list></div>
+            </section>
+
+            <section class="admin-panel" hidden data-course-panel="pricing">
+              <div class="admin-panel-header">
+                <div>
+                  <p class="app-kicker">Preços</p>
+                  <h2>Dados comerciais</h2>
+                </div>
+              </div>
+
+              <form class="admin-form" data-pricing-form>
+                <div class="admin-form-grid">
+                  <label>
+                    <span>Preço</span>
+                    <input type="number" min="0" step="0.01" data-price />
+                  </label>
+                  <label>
+                    <span>Preço promocional</span>
+                    <input type="number" min="0" step="0.01" data-sale-price />
+                  </label>
+                  <label>
+                    <span>Moeda</span>
+                    <input type="text" data-currency />
+                  </label>
+                  <label class="span-2">
+                    <span>Link de pagamento</span>
+                    <input type="url" data-payment-link />
+                  </label>
+                  <label class="check-field">
+                    <input type="checkbox" data-price-active />
+                    <span>Ativo</span>
+                  </label>
+                  <label class="check-field">
+                    <input type="checkbox" data-price-visible />
+                    <span>Visível</span>
+                  </label>
+                </div>
+                <div class="admin-actions">
+                  <button class="app-button app-button-primary" type="submit">Salvar preços</button>
+                </div>
+                <p class="app-message" role="status" aria-live="polite" data-pricing-message></p>
+              </form>
+            </section>
+
+            <section class="admin-panel" hidden data-course-panel="certificates">
+              <div class="admin-panel-header">
+                <div>
+                  <p class="app-kicker">Certificados</p>
+                  <h2>Registros deste curso</h2>
+                </div>
+              </div>
+
+              <form class="admin-form" data-certificate-form>
+                <div class="admin-form-grid">
+                  <label>
+                    <span>Aluno matriculado</span>
+                    <select required data-certificate-user></select>
+                  </label>
+                </div>
+                <div class="admin-actions">
+                  <button class="app-button app-button-primary" type="submit">Gerar registro de certificado</button>
+                </div>
+                <p class="app-message" role="status" aria-live="polite" data-certificate-message></p>
+              </form>
+
+              <p class="empty-state" role="status" aria-live="polite" data-certificate-state>
+                Carregando dados...
+              </p>
+              <div class="admin-list" data-certificate-list></div>
+            </section>
+
+            <section class="admin-panel" hidden data-course-panel="settings">
+              <div class="admin-panel-header">
+                <div>
+                  <p class="app-kicker">Configurações</p>
+                  <h2>Publicação do curso</h2>
+                </div>
+              </div>
+
+              <form class="admin-form" data-settings-form>
+                <div class="admin-form-grid">
+                  <label>
+                    <span>Slug / ID</span>
+                    <input type="text" readonly data-settings-id />
+                  </label>
+                  <label>
+                    <span>Ordem</span>
+                    <input type="number" step="1" data-settings-order />
+                  </label>
+                  <label class="check-field">
+                    <input type="checkbox" data-settings-active />
+                    <span>Ativo</span>
+                  </label>
+                  <label class="check-field">
+                    <input type="checkbox" data-settings-visible />
+                    <span>Visível</span>
+                  </label>
+                </div>
+                <div class="admin-actions">
+                  <button class="app-button app-button-primary" type="submit">Salvar configurações</button>
+                  <button class="app-button" type="button" data-course-disable>Desativar curso</button>
+                </div>
+                <p class="app-message" role="status" aria-live="polite" data-settings-message></p>
+              </form>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="assets/js/admin-course.js"></script>
+  </body>
+</html>
