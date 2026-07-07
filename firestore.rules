@@ -6,41 +6,77 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function hasUserDoc() {
+    function hasCurrentUserDoc() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
-    function userDoc() {
+    function currentUserDoc() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
+    function currentRole() {
+      return hasCurrentUserDoc() ? currentUserDoc().data.role : "estudante";
+    }
+
+    function currentUserActive() {
+      return hasCurrentUserDoc() && currentUserDoc().data.active == true;
+    }
+
+    function isAdmin() {
+      return signedIn() && currentRole() == "admin" && currentUserActive();
+    }
+
     function isEnrolled(courseId) {
-      return hasUserDoc()
-        && userDoc().data.enrolledCourses is list
-        && userDoc().data.enrolledCourses.hasAny([courseId]);
+      return hasCurrentUserDoc()
+        && currentUserDoc().data.enrolledCourses is list
+        && currentUserDoc().data.enrolledCourses.hasAny([courseId]);
+    }
+
+    function isPublicVisibleCourse() {
+      return signedIn()
+        && resource.data.active == true
+        && resource.data.visible == true;
     }
 
     match /users/{userId} {
-      allow get: if signedIn() && request.auth.uid == userId;
-      allow list: if false;
-      allow create, update, delete: if false;
+      allow get: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isAdmin();
+      allow delete: if false;
     }
 
     match /courses/{courseId} {
-      allow get: if isEnrolled(courseId);
-      allow list: if false;
-      allow create, update, delete: if false;
+      allow get: if isAdmin() || isEnrolled(courseId) || isPublicVisibleCourse();
+      allow list: if isAdmin() || isPublicVisibleCourse();
+      allow create, update: if isAdmin();
+      allow delete: if false;
 
       match /modules/{moduleId} {
-        allow get, list: if isEnrolled(courseId);
-        allow create, update, delete: if false;
+        allow get, list: if isAdmin() || isEnrolled(courseId);
+        allow create, update: if isAdmin();
+        allow delete: if false;
 
         match /lessons/{lessonId} {
-          allow get, list: if isEnrolled(courseId);
-          allow create, update, delete: if false;
+          allow get, list: if isAdmin() || isEnrolled(courseId);
+          allow create, update: if isAdmin();
+          allow delete: if false;
         }
       }
+    }
+
+    match /enrollments/{enrollmentId} {
+      allow get, list: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /certificates/{certificateId} {
+      allow get, list: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create, update: if isAdmin();
+      allow delete: if false;
     }
 
     match /{document=**} {

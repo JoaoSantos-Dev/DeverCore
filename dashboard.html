@@ -33,19 +33,43 @@
       <section class="app-container dashboard-grid">
         <aside class="profile-panel">
           <p class="app-kicker">Conta</p>
-          <h1 data-user-name>Carregando...</h1>
-          <p data-user-email></p>
+          <h1>Bem-vindo</h1>
+          <p class="profile-name" data-user-name>Carregando...</p>
+          <p class="profile-email" data-user-email></p>
           <span class="role-badge" data-user-role>Perfil: estudante</span>
         </aside>
 
         <section class="content-panel" aria-labelledby="courses-title">
           <p class="app-kicker">Meus cursos</p>
           <h2 id="courses-title">Cursos inscritos</h2>
+
+          <article class="admin-access-card" hidden data-admin-card>
+            <span>Painel administrativo</span>
+            <h3>Gerencie cursos, alunos e conteúdos da DEVER.</h3>
+            <a class="app-button app-button-primary" href="admin.html">Acessar admin</a>
+          </article>
+
           <p class="empty-state" role="status" aria-live="polite" hidden data-empty-courses>
             Você ainda não está inscrito em nenhum curso.
           </p>
           <div class="course-list" data-course-list></div>
         </section>
+      </section>
+
+      <section class="app-container available-panel" aria-labelledby="available-title">
+        <div class="admin-panel-header">
+          <div>
+            <p class="app-kicker">Cursos disponíveis</p>
+            <h2 id="available-title">Cursos disponíveis</h2>
+          </div>
+        </div>
+        <p class="admin-note">
+          Após a confirmação da inscrição, o acesso ao curso será liberado no painel.
+        </p>
+        <p class="empty-state" role="status" aria-live="polite" hidden data-empty-available>
+          Nenhum curso disponível no momento.
+        </p>
+        <div class="available-course-grid" data-available-course-list></div>
       </section>
     </main>
 

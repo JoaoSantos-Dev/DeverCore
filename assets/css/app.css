@@ -12,7 +12,7 @@
   --red-rust: #a6402d;
   --orange-burnt: #b85c2e;
   --amber-metal: #c28a3b;
-  --max-width: 1120px;
+  --max-width: 1180px;
   --font-title: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
   --font-body: "IBM Plex Sans", Inter, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
@@ -29,6 +29,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
+  overflow-x: hidden;
   color: var(--text-main);
   background:
     linear-gradient(180deg, rgba(13, 13, 13, 0.96), rgba(13, 13, 13, 0.99)),
@@ -43,7 +44,9 @@ a {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
@@ -52,8 +55,8 @@ button {
 }
 
 .app-container {
-  width: min(calc(100% - 40px), var(--max-width));
-  margin: 0 auto;
+  width: min(calc(100% - 32px), var(--max-width));
+  margin-inline: auto;
 }
 
 .app-header {
@@ -71,6 +74,7 @@ button {
   justify-content: space-between;
   min-height: 78px;
   gap: 24px;
+  min-width: 0;
 }
 
 .app-brand {
@@ -91,6 +95,7 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
   color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: 0.78rem;
@@ -132,7 +137,7 @@ button {
 }
 
 .app-main {
-  padding: 64px 0 88px;
+  padding: clamp(34px, 5vw, 58px) 0 clamp(56px, 7vw, 82px);
 }
 
 .auth-body {
@@ -149,9 +154,12 @@ button {
 .auth-card,
 .profile-panel,
 .content-panel,
+.available-panel,
 .course-hero,
 .module-sidebar,
 .lesson-panel {
+  min-width: 0;
+  max-width: 100%;
   border: 1px solid rgba(216, 210, 200, 0.13);
   border-left: 4px solid var(--red-duty);
   background:
@@ -189,20 +197,34 @@ h3 {
 }
 
 h1 {
-  font-size: clamp(2.4rem, 5vw, 4rem);
+  font-size: clamp(2rem, 4vw, 3.25rem);
 }
 
 h2 {
-  font-size: clamp(2rem, 4vw, 3rem);
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
 }
 
 h3 {
-  font-size: 1.35rem;
+  font-size: clamp(1.2rem, 2vw, 1.45rem);
 }
 
 p {
   color: var(--text-muted);
   line-height: 1.7;
+}
+
+h1,
+h2,
+h3,
+p,
+span,
+strong,
+a,
+button,
+input {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .auth-copy {
@@ -267,14 +289,33 @@ p {
   font-weight: 700;
 }
 
+.app-message.success {
+  color: #b8c27a;
+}
+
+.app-message.error {
+  color: #e2947f;
+}
+
+.app-message.warning {
+  color: #d8a37d;
+}
+
+.app-message.muted {
+  color: var(--text-muted);
+}
+
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 0.34fr) minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  min-width: 0;
 }
 
 .profile-panel,
 .content-panel,
+.available-panel,
 .course-hero,
 .module-sidebar,
 .lesson-panel {
@@ -286,8 +327,30 @@ p {
   margin: 14px 0;
 }
 
+.profile-panel h1 {
+  font-size: clamp(1.55rem, 2.5vw, 2.3rem);
+}
+
+.profile-name {
+  margin: 14px 0 6px;
+  color: var(--text-main);
+  font-family: var(--font-title);
+  font-size: clamp(1.5rem, 3vw, 2.35rem);
+  font-weight: 800;
+  line-height: 1.02;
+  text-transform: uppercase;
+}
+
+.profile-email {
+  margin: 0 0 18px;
+  font-family: var(--font-mono);
+  font-size: clamp(0.82rem, 1.6vw, 0.95rem);
+  line-height: 1.5;
+}
+
 .role-badge {
   display: inline-flex;
+  max-width: 100%;
   min-height: 34px;
   align-items: center;
   padding: 0 10px;
@@ -305,9 +368,24 @@ p {
   margin-top: 22px;
 }
 
+.available-panel {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+  min-width: 0;
+}
+
+.available-course-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
 .course-card {
   display: grid;
   gap: 8px;
+  min-width: 0;
   padding: 20px;
   border: 1px solid rgba(216, 210, 200, 0.12);
   border-left: 3px solid var(--red-duty);
@@ -324,7 +402,7 @@ p {
 
 .course-card strong {
   font-family: var(--font-title);
-  font-size: 1.55rem;
+  font-size: clamp(1.25rem, 2.2vw, 1.65rem);
   line-height: 1;
   text-transform: uppercase;
 }
@@ -333,22 +411,349 @@ p {
   margin: 0;
 }
 
+.course-price {
+  color: var(--text-main);
+  font-family: var(--font-title);
+  font-size: clamp(1.3rem, 2.2vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.available-course-card {
+  align-content: start;
+}
+
+.available-course-card .app-button {
+  width: fit-content;
+  margin-top: 8px;
+  padding-inline: 14px;
+  font-size: 0.72rem;
+}
+
+.course-card-action {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 34px;
+  align-items: center;
+  margin-top: 4px;
+  padding: 0 10px;
+  border: 1px solid rgba(194, 138, 59, 0.28);
+  color: var(--amber-metal);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .course-card:hover,
 .course-card:focus-visible {
   border-color: rgba(194, 138, 59, 0.44);
   outline: none;
 }
 
+.admin-access-card {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 20px;
+  border: 1px solid rgba(194, 138, 59, 0.28);
+  border-left: 3px solid var(--orange-burnt);
+  background:
+    linear-gradient(180deg, rgba(142, 47, 35, 0.16), rgba(13, 13, 13, 0.54)),
+    rgba(13, 13, 13, 0.48);
+}
+
+.admin-access-card span,
+.status-pill {
+  color: var(--amber-metal);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-access-card h3 {
+  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+}
+
+.admin-shell,
+.admin-content {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.admin-hero h1 {
+  font-size: clamp(2rem, 4vw, 3.4rem);
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
+.admin-card,
+.admin-panel,
+.admin-course-item {
+  min-width: 0;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  border-left: 3px solid var(--red-duty);
+  background:
+    linear-gradient(180deg, rgba(32, 32, 32, 0.88), rgba(21, 21, 21, 0.92)),
+    var(--bg-panel);
+}
+
+.admin-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 230px;
+  padding: 20px;
+}
+
+.admin-card h2 {
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+}
+
+.admin-card p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.admin-card .app-button {
+  width: 100%;
+  margin-top: auto;
+  padding-inline: 10px;
+  font-size: 0.72rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(194, 138, 59, 0.28);
+  background: rgba(8, 8, 8, 0.34);
+}
+
+.admin-panel {
+  display: grid;
+  gap: 18px;
+  padding: 26px;
+  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.24);
+}
+
+.admin-panel[hidden],
+.admin-content[hidden],
+.access-denied-panel[hidden],
+.admin-access-card[hidden] {
+  display: none;
+}
+
+.admin-panel-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+  min-width: 0;
+}
+
+.admin-course-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-form {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid rgba(216, 210, 200, 0.1);
+  background: rgba(8, 8, 8, 0.28);
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
+.admin-form-grid.compact {
+  gap: 12px;
+}
+
+.admin-form label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea,
+.admin-form-grid input,
+.admin-form-grid select,
+.admin-form-grid textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(216, 210, 200, 0.16);
+  outline: none;
+  background: rgba(8, 8, 8, 0.58);
+  color: var(--text-main);
+}
+
+.admin-form textarea,
+.admin-form-grid textarea {
+  min-height: 96px;
+  padding-block: 12px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.admin-form input:focus,
+.admin-form select:focus,
+.admin-form textarea:focus,
+.admin-form-grid input:focus,
+.admin-form-grid select:focus,
+.admin-form-grid textarea:focus {
+  border-color: rgba(194, 138, 59, 0.72);
+  box-shadow: 0 0 0 4px rgba(194, 138, 59, 0.08);
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+.check-field {
+  display: inline-flex !important;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  justify-content: start;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  background: rgba(8, 8, 8, 0.32);
+}
+
+.check-field input {
+  width: auto;
+  min-height: 0;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-note {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(194, 138, 59, 0.24);
+  background: rgba(194, 138, 59, 0.06);
+  color: #d8a37d;
+  font-weight: 700;
+}
+
+.admin-split {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+  align-items: start;
+  min-width: 0;
+}
+
+.admin-subpanel {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid rgba(216, 210, 200, 0.1);
+  background: rgba(8, 8, 8, 0.2);
+}
+
+.admin-course-item {
+  display: grid;
+  gap: 9px;
+  padding: 18px;
+  background: rgba(13, 13, 13, 0.48);
+}
+
+.admin-course-item > span {
+  color: var(--amber-metal);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-course-item strong {
+  font-family: var(--font-title);
+  font-size: clamp(1.25rem, 2.2vw, 1.65rem);
+  line-height: 1.02;
+  text-transform: uppercase;
+}
+
+.admin-course-item p {
+  margin: 0;
+}
+
+.admin-course-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.admin-course-meta span {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-preview {
+  padding: 18px;
+  box-shadow: none;
+}
+
 .course-shell {
   display: grid;
   gap: 18px;
+  min-width: 0;
 }
 
 .course-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 0.34fr) minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  gap: 24px;
   align-items: start;
+  min-width: 0;
 }
 
 .module-sidebar {
@@ -364,6 +769,7 @@ p {
 
 .module-block h3 {
   margin-bottom: 8px;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
 }
 
 .module-block p {
@@ -378,6 +784,7 @@ p {
 
 .lesson-button {
   width: 100%;
+  min-width: 0;
   min-height: 42px;
   padding: 10px 12px;
   border: 1px solid rgba(216, 210, 200, 0.12);
@@ -404,6 +811,10 @@ p {
   border-bottom: 1px solid rgba(216, 210, 200, 0.12);
 }
 
+.lesson-header h2 {
+  font-size: clamp(1.45rem, 3vw, 2.25rem);
+}
+
 .lesson-header span {
   color: var(--amber-metal);
   font-family: var(--font-mono);
@@ -413,6 +824,7 @@ p {
 }
 
 .lesson-text {
+  max-width: 72ch;
   white-space: pre-line;
 }
 
@@ -439,7 +851,7 @@ p {
 
 @media (max-width: 860px) {
   .app-container {
-    width: min(calc(100% - 28px), var(--max-width));
+    width: min(calc(100% - 24px), var(--max-width));
   }
 
   .app-header-inner,
@@ -459,6 +871,27 @@ p {
     grid-template-columns: 1fr;
   }
 
+  .available-course-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-panel-header {
+    display: grid;
+  }
+
+  .admin-split,
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2 {
+    grid-column: auto;
+  }
+
   .module-sidebar {
     position: static;
   }
@@ -468,28 +901,98 @@ p {
   .app-header-inner {
     align-items: flex-start;
     flex-direction: column;
-    padding: 14px 0;
+    min-height: 0;
+    padding: 12px 0;
   }
 
   .app-nav {
     width: 100%;
     justify-content: space-between;
+    gap: 8px;
+  }
+
+  .app-brand img {
+    height: 34px;
+  }
+
+  .app-nav a,
+  .app-nav button {
+    flex: 1 1 auto;
+    min-height: 38px;
+    padding: 0 8px;
+    font-size: 0.68rem;
   }
 
   .app-main {
-    padding: 42px 0 64px;
+    padding: 30px 0 56px;
   }
 
   .auth-card,
   .profile-panel,
   .content-panel,
+  .available-panel,
   .course-hero,
   .module-sidebar,
   .lesson-panel {
     padding: 20px;
   }
 
+  .available-course-grid {
+    grid-template-columns: 1fr;
+  }
+
   .app-button {
     width: 100%;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-card,
+  .admin-panel,
+  .admin-course-item {
+    padding: 18px;
+  }
+
+  .admin-form,
+  .admin-subpanel {
+    padding: 16px;
+  }
+
+  .admin-actions .app-button {
+    width: 100%;
+  }
+
+  .profile-panel h1 {
+    font-size: 1.55rem;
+  }
+
+  .profile-name {
+    font-size: clamp(1.35rem, 9vw, 2rem);
+  }
+
+  .course-card {
+    padding: 18px;
+  }
+
+  .available-course-card .app-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .app-container {
+    width: min(calc(100% - 20px), var(--max-width));
+  }
+
+  .auth-card,
+  .profile-panel,
+  .content-panel,
+  .available-panel,
+  .course-hero,
+  .module-sidebar,
+  .lesson-panel {
+    padding: 18px;
   }
 }

@@ -7,7 +7,7 @@ import {
   query,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { db } from "./firebase.js";
-import { getUserProfile, logout, requireAuth } from "./auth.js";
+import { getUserProfile, logout, normalizeRole, requireAuth } from "./auth.js";
 
 const titleEl = document.querySelector("[data-course-title]");
 const descriptionEl = document.querySelector("[data-course-description]");
@@ -47,6 +47,10 @@ function getCourseId() {
 
 function isEnrolled(profile, courseId) {
   return Array.isArray(profile?.enrolledCourses) && profile.enrolledCourses.includes(courseId);
+}
+
+function canAccessCourse(profile, courseId) {
+  return normalizeRole(profile?.role) === "admin" || isEnrolled(profile, courseId);
 }
 
 function getYouTubeEmbedUrl(url) {
@@ -191,7 +195,7 @@ function createModuleBlock(module, lessons, isFirstLessonRendered) {
   return block;
 }
 
-async function loadModulesWithLessons(courseId) {
+async function loadModulesWithLessons(courseId, includeUnpublished = false) {
   const moduleSnapshot = await getDocs(
     query(collection(db, "courses", courseId, "modules"), orderBy("order", "asc"))
   );
@@ -207,9 +211,12 @@ async function loadModulesWithLessons(courseId) {
 
     const lessons = lessonSnapshot.docs
       .map((lessonDoc) => ({ id: lessonDoc.id, ...lessonDoc.data() }))
-      .filter((lesson) => lesson.published !== false);
+      .filter((lesson) => includeUnpublished || lesson.published !== false);
 
-    modules.push({ id: moduleDoc.id, ...moduleDoc.data(), lessons });
+    const module = { id: moduleDoc.id, ...moduleDoc.data(), lessons };
+    if (includeUnpublished || module.active !== false) {
+      modules.push(module);
+    }
   }
 
   return modules;
@@ -221,8 +228,9 @@ async function initCourse() {
 
   const courseId = getCourseId();
   const profile = await getUserProfile(user.uid);
+  const isAdminProfile = normalizeRole(profile?.role) === "admin";
 
-  if (!courseId || !isEnrolled(profile, courseId)) {
+  if (!courseId || !canAccessCourse(profile, courseId)) {
     setState("Curso não encontrado ou acesso não liberado.", {
       hideHero: true,
       hideContent: true,
@@ -240,7 +248,7 @@ async function initCourse() {
   }
 
   const course = courseSnapshot.data();
-  if (course.active === false) {
+  if (course.active === false && !isAdminProfile) {
     setState("Curso não encontrado ou acesso não liberado.", {
       hideHero: true,
       hideContent: true,
@@ -256,7 +264,7 @@ async function initCourse() {
     progressEl.textContent = `Status: ${progress}`;
   }
 
-  const modules = await loadModulesWithLessons(courseId);
+  const modules = await loadModulesWithLessons(courseId, isAdminProfile);
   const hasLessons = modules.some((module) => module.lessons.length);
   if (!moduleList || !hasLessons) {
     setState("Este curso ainda não possui aulas publicadas.", { hideContent: true });

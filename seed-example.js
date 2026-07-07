@@ -38,8 +38,10 @@ const batch = writeBatch(db);
 batch.set(doc(db, "users", studentUid), {
   name: "Joao Ricardo",
   email: "email@email.com",
+  // Roles validas: admin, mod, estudante.
   role: "estudante",
   enrolledCourses: [courseId],
+  active: true,
   createdAt: serverTimestamp(),
 });
 
@@ -48,8 +50,33 @@ batch.set(doc(db, "courses", courseId), {
   slug: courseId,
   description: "Treinamento pratico para criar seu primeiro jogo 2D na Unity.",
   coverUrl: "",
+  price: 197,
+  currency: "BRL",
+  salePrice: null,
+  paymentLink: "",
   active: true,
+  visible: true,
   order: 1,
+  createdAt: serverTimestamp(),
+});
+
+batch.set(doc(db, "enrollments", `${studentUid}_${courseId}`), {
+  userId: studentUid,
+  courseId,
+  status: "active",
+  enrolledAt: serverTimestamp(),
+  completedAt: null,
+  certificateIssued: false,
+});
+
+batch.set(doc(db, "certificates", "DEVER-2026-0001"), {
+  userId: studentUid,
+  courseId,
+  userName: "Joao Ricardo",
+  courseTitle: "Unity 2D — Primeiro Jogo",
+  issuedAt: serverTimestamp(),
+  certificateCode: "DEVER-2026-0001",
+  status: "issued",
 });
 
 batch.set(doc(db, "courses", courseId, "modules", "modulo-01-fundamentos"), {

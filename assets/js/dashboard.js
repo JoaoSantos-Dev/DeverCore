@@ -1,25 +1,70 @@
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { db } from "./firebase.js";
-import { displayRole, getDisplayName, getUserProfile, logout, requireAuth } from "./auth.js";
+import {
+  displayRole,
+  getDisplayName,
+  getUserProfile,
+  logout,
+  normalizeRole,
+  requireAuth,
+} from "./auth.js";
 
 const nameEl = document.querySelector("[data-user-name]");
 const emailEl = document.querySelector("[data-user-email]");
 const roleEl = document.querySelector("[data-user-role]");
+const adminCard = document.querySelector("[data-admin-card]");
 const courseList = document.querySelector("[data-course-list]");
+const availableCourseList = document.querySelector("[data-available-course-list]");
 const emptyState = document.querySelector("[data-empty-courses]");
+const emptyAvailable = document.querySelector("[data-empty-available]");
 const logoutButtons = document.querySelectorAll("[data-logout]");
 
 logoutButtons.forEach((button) => {
   button.addEventListener("click", logout);
 });
 
-function createCourseCard(course, courseId) {
+function formatPrice(course) {
+  const currency = course.currency || "BRL";
+  const price = Number(course.price || 0);
+  const salePrice = Number(course.salePrice || 0);
+  let formatter;
+
+  try {
+    formatter = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency,
+    });
+  } catch {
+    formatter = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  }
+
+  if (salePrice > 0) {
+    const current = formatter.format(salePrice);
+    if (price > salePrice) return `De ${formatter.format(price)} por ${current}`;
+    return current;
+  }
+
+  if (price > 0) return formatter.format(price);
+  return course.price === 0 ? "Gratuito" : "Preço em definição";
+}
+
+function createEnrolledCourseCard(course, courseId) {
   const link = document.createElement("a");
   link.className = "course-card";
   link.href = `course.html?id=${encodeURIComponent(courseId)}`;
 
   const eyebrow = document.createElement("span");
-  eyebrow.textContent = "Curso inscrito";
+  eyebrow.textContent = course.status || "Curso inscrito";
 
   const title = document.createElement("strong");
   title.textContent = course.title || courseId;
@@ -27,8 +72,46 @@ function createCourseCard(course, courseId) {
   const description = document.createElement("p");
   description.textContent = course.description || "Acesse os módulos e aulas disponíveis.";
 
-  link.append(eyebrow, title, description);
+  const action = document.createElement("span");
+  action.className = "course-card-action";
+  action.textContent = "Acessar curso";
+
+  link.append(eyebrow, title, description, action);
   return link;
+}
+
+function createAvailableCourseCard(course) {
+  const card = document.createElement("article");
+  card.className = "course-card available-course-card";
+
+  const eyebrow = document.createElement("span");
+  eyebrow.textContent = "Curso disponível";
+
+  const title = document.createElement("strong");
+  title.textContent = course.title || course.id;
+
+  const description = document.createElement("p");
+  description.textContent = course.description || "Treinamento disponível para inscrição.";
+
+  const price = document.createElement("p");
+  price.className = "course-price";
+  price.textContent = formatPrice(course);
+
+  const action = document.createElement("a");
+  action.className = "app-button app-button-primary";
+  if (course.paymentLink) {
+    action.href = course.paymentLink;
+    action.target = "_blank";
+    action.rel = "noopener noreferrer";
+    action.setAttribute("aria-label", `Comprar ${course.title || "curso"} em uma nova aba`);
+    action.textContent = "Comprar curso";
+  } else {
+    action.href = "index.html#contato";
+    action.textContent = "Tenho interesse";
+  }
+
+  card.append(eyebrow, title, description, price, action);
+  return card;
 }
 
 async function loadCourse(courseId) {
@@ -39,44 +122,88 @@ async function loadCourse(courseId) {
   return { id: snapshot.id, ...course };
 }
 
-async function initDashboard() {
+async function loadEnrolledCourses(enrolledIds) {
+  if (!courseList || !emptyState) return [];
+  courseList.replaceChildren();
+
+  if (!enrolledIds.length) {
+    emptyState.hidden = false;
+    return [];
+  }
+
+  const results = await Promise.allSettled(enrolledIds.map(loadCourse));
+  const courses = results
+    .filter((result) => result.status === "fulfilled" && result.value)
+    .map((result) => result.value)
+    .sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+
+  if (!courses.length) {
+    emptyState.hidden = false;
+    return [];
+  }
+
+  emptyState.hidden = true;
+  courses.forEach((course) => {
+    courseList.appendChild(createEnrolledCourseCard(course, course.id));
+  });
+
+  return courses;
+}
+
+async function loadAvailableCourses(enrolledIds) {
+  if (!availableCourseList || !emptyAvailable) return [];
+  availableCourseList.replaceChildren();
+
+  const coursesQuery = query(
+    collection(db, "courses"),
+    where("active", "==", true),
+    where("visible", "==", true)
+  );
+  const snapshot = await getDocs(coursesQuery);
+  const courses = snapshot.docs
+    .map((courseDoc) => ({ id: courseDoc.id, ...courseDoc.data() }))
+    .filter((course) => !enrolledIds.includes(course.id))
+    .sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+
+  if (!courses.length) {
+    emptyAvailable.hidden = false;
+    return [];
+  }
+
+  emptyAvailable.hidden = true;
+  courses.forEach((course) => {
+    availableCourseList.appendChild(createAvailableCourseCard(course));
+  });
+
+  return courses;
+}
+
+async function loadStudentDashboard() {
   const user = await requireAuth();
   if (!user) return;
 
   const profile = await getUserProfile(user.uid);
-  const enrolledCourses = Array.isArray(profile?.enrolledCourses) ? profile.enrolledCourses : [];
+  const enrolledIds = Array.isArray(profile?.enrolledCourses) ? profile.enrolledCourses : [];
+  // Futuramente, as matriculas podem migrar para a colecao enrollments.
+  const role = normalizeRole(profile?.role);
 
-  if (nameEl) nameEl.textContent = `Bem-vindo, ${getDisplayName(user, profile)}`;
+  if (nameEl) nameEl.textContent = getDisplayName(user, profile);
   if (emailEl) emailEl.textContent = profile?.email || user.email || "";
   if (roleEl) roleEl.textContent = `Perfil: ${displayRole(profile?.role)}`;
+  if (adminCard) adminCard.hidden = role !== "admin";
 
-  if (!courseList || !emptyState) return;
-
-  if (!enrolledCourses.length) {
-    emptyState.hidden = false;
-    return;
-  }
-
-  const results = await Promise.allSettled(enrolledCourses.map(loadCourse));
-  const courses = results
-    .filter((result) => result.status === "fulfilled" && result.value)
-    .map((result) => result.value);
-
-  if (!courses.length) {
-    emptyState.hidden = false;
-    return;
-  }
-
-  courses
-    .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
-    .forEach((course) => {
-      courseList.appendChild(createCourseCard(course, course.id));
-    });
+  await loadEnrolledCourses(enrolledIds);
+  await loadAvailableCourses(enrolledIds);
 }
 
-initDashboard().catch(() => {
+loadStudentDashboard().catch((error) => {
+  console.error("[DASHBOARD] Erro ao carregar dashboard:", error);
   if (emptyState) {
     emptyState.hidden = false;
     emptyState.textContent = "Não foi possível carregar seus cursos agora.";
+  }
+  if (emptyAvailable) {
+    emptyAvailable.hidden = false;
+    emptyAvailable.textContent = "Não foi possível carregar cursos disponíveis agora.";
   }
 });
