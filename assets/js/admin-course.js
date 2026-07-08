@@ -8,6 +8,7 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { db } from "./firebase.js";
 import { logout, normalizeRole, requireAdmin } from "./auth.js";
@@ -20,8 +21,13 @@ const state = {
   users: [],
   enrollments: [],
   certificates: [],
+  progress: [],
   modules: [],
   selectedModuleId: "",
+  editMode: false,
+  expandedModules: new Set(),
+  modalMode: "",
+  draggedModuleId: "",
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -48,7 +54,15 @@ const els = {
   lessonForm: $("[data-lesson-form]"),
   lessonMessage: $("[data-lesson-message]"),
   lessonPreview: $("[data-lesson-preview]"),
-  selectedModuleLabel: $("[data-selected-module-label]"),
+  editModeToggle: $("[data-edit-mode-toggle]"),
+  contentNote: $("[data-content-note]"),
+  contentModal: $("[data-content-modal]"),
+  modalKicker: $("[data-content-modal-kicker]"),
+  modalTitle: $("[data-content-modal-title]"),
+  lessonTypePicker: $("[data-lesson-type-picker]"),
+  lessonMediaField: $("[data-lesson-media-field]"),
+  lessonMediaLabel: $("[data-lesson-media-label]"),
+  lessonContentLabel: $("[data-lesson-content-label]"),
   enrollmentForm: $("[data-enrollment-form]"),
   enrollmentUser: $("[data-enrollment-user]"),
   enrollmentMessage: $("[data-enrollment-message]"),
@@ -148,7 +162,24 @@ function formatDate(value) {
 }
 
 function sortByOrder(items) {
-  return [...items].sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+  return [...items].sort((a, b) => {
+    const orderA = Number(a.order || 999);
+    const orderB = Number(b.order || 999);
+    if (orderA !== orderB) return orderA - orderB;
+    return String(a.id || "").localeCompare(String(b.id || ""));
+  });
+}
+
+function getNextOrder(items) {
+  const maxOrder = items.reduce((max, item) => {
+    const order = Number(item.order || 0);
+    return Number.isFinite(order) && order > max ? order : max;
+  }, 0);
+  return maxOrder + 1;
+}
+
+function getVisualNumber(index) {
+  return String(index + 1).padStart(2, "0");
 }
 
 function createBadge(text) {
@@ -225,6 +256,92 @@ function setupCourseTabs() {
   });
 }
 
+function setModalTitle(kicker, title) {
+  if (els.modalKicker) els.modalKicker.textContent = kicker;
+  if (els.modalTitle) els.modalTitle.textContent = title;
+}
+
+function hideContentModal() {
+  if (!els.contentModal) return;
+  els.contentModal.hidden = true;
+  state.modalMode = "";
+  if (els.moduleForm) els.moduleForm.hidden = true;
+  if (els.lessonForm) els.lessonForm.hidden = true;
+  if (els.lessonTypePicker) els.lessonTypePicker.hidden = true;
+  if (els.lessonPreview) els.lessonPreview.hidden = true;
+}
+
+function showContentModal(mode) {
+  if (!els.contentModal) return;
+  state.modalMode = mode;
+  els.contentModal.hidden = false;
+  if (els.moduleForm) els.moduleForm.hidden = mode !== "module";
+  if (els.lessonForm) els.lessonForm.hidden = mode !== "lesson";
+  if (els.lessonTypePicker) els.lessonTypePicker.hidden = mode !== "type";
+  if (els.lessonPreview) els.lessonPreview.hidden = mode !== "preview";
+}
+
+function toggleEditMode() {
+  state.editMode = !state.editMode;
+  if (els.editModeToggle) {
+    els.editModeToggle.textContent = `Modo edição: ${state.editMode ? "ON" : "OFF"}`;
+    els.editModeToggle.setAttribute("aria-pressed", String(state.editMode));
+  }
+  $$("[data-module-new]").forEach((button) => {
+    button.hidden = !state.editMode;
+  });
+  if (els.contentNote) {
+    els.contentNote.textContent = state.editMode
+      ? "Modo edição ativo. Use os botões dos módulos e aulas para alterar a estrutura do curso."
+      : "Ative o modo edição para alterar conteúdos. Com ele desligado, use a lista para revisar a estrutura do curso.";
+  }
+  renderModules();
+}
+
+function getLessonTypeLabel(type) {
+  const labels = {
+    text: "Texto",
+    image: "Imagem",
+    video: "Vídeo",
+    live: "Live",
+    link: "Link",
+  };
+  return labels[type] || type || "Texto";
+}
+
+function getLessonIcon(type) {
+  const icons = {
+    text: "TXT",
+    image: "IMG",
+    video: "VID",
+    live: "LIVE",
+    link: "URL",
+  };
+  return icons[type] || "TXT";
+}
+
+function syncLessonTypeFields() {
+  const type = $("[data-lesson-type]")?.value || "text";
+  const mediaRequired = type !== "text";
+
+  if (els.lessonMediaField) els.lessonMediaField.hidden = !mediaRequired;
+  if ($("[data-lesson-media-url]")) $("[data-lesson-media-url]").required = mediaRequired;
+  if ($("[data-lesson-content]")) $("[data-lesson-content]").required = type === "text";
+  if (els.lessonMediaLabel) {
+    els.lessonMediaLabel.textContent =
+      type === "image"
+        ? "URL da imagem"
+        : type === "video"
+          ? "URL do vídeo"
+          : type === "live"
+            ? "URL da live"
+            : "URL externa";
+  }
+  if (els.lessonContentLabel) {
+    els.lessonContentLabel.textContent = type === "text" ? "Conteúdo" : "Descrição";
+  }
+}
+
 function syncCourseForms() {
   const course = state.course || {};
   if ($("[data-overview-title]")) $("[data-overview-title]").value = course.title || "";
@@ -295,6 +412,28 @@ function getEnrollmentRows() {
 
 function getActiveEnrollmentRows() {
   return getEnrollmentRows().filter((row) => row.status !== "inactive");
+}
+
+function getPublishedLessons() {
+  return state.modules.flatMap((module) => {
+    if (module.active === false) return [];
+    return (module.lessons || [])
+      .filter((lesson) => lesson.published !== false)
+      .map((lesson) => ({ ...lesson, moduleId: module.id }));
+  });
+}
+
+function getUserCourseProgress(userId) {
+  const publishedLessons = getPublishedLessons();
+  const completed = new Set(
+    state.progress
+      .filter((item) => item.userId === userId && item.courseId === state.courseId && item.status === "completed")
+      .map((item) => item.lessonId)
+  );
+  const completedCount = publishedLessons.filter((lesson) => completed.has(lesson.id)).length;
+  const total = publishedLessons.length;
+  const percent = total ? Math.round((completedCount / total) * 100) : 0;
+  return { completedCount, total, percent };
 }
 
 function updateSummary() {
@@ -371,17 +510,23 @@ function resetModuleForm() {
   setMessage(els.moduleMessage, "", "muted");
 }
 
-function editModule(moduleId) {
-  const module = getModuleById(moduleId);
-  if (!module) return;
+function openModuleModal(moduleId = null) {
+  resetModuleForm();
+  const module = moduleId ? getModuleById(moduleId) : null;
+  setModalTitle("Módulo", module ? "Editar módulo" : "Adicionar novo módulo");
 
-  $("[data-module-edit-id]").value = module.id;
-  $("[data-module-title]").value = module.title || "";
-  $("[data-module-description]").value = module.description || "";
-  $("[data-module-order]").value = module.order ?? 1;
-  $("[data-module-active]").checked = module.active !== false;
-  setMessage(els.moduleMessage, `Editando módulo: ${module.title || module.id}`, "muted");
-  els.moduleForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (module) {
+    $("[data-module-edit-id]").value = module.id;
+    $("[data-module-title]").value = module.title || "";
+    $("[data-module-description]").value = module.description || "";
+    $("[data-module-order]").value = module.order ?? 1;
+    $("[data-module-active]").checked = module.active !== false;
+    setMessage(els.moduleMessage, `Editando módulo: ${module.title || module.id}`, "muted");
+  } else if ($("[data-module-order]")) {
+    $("[data-module-order]").value = String(getNextOrder(state.modules));
+  }
+
+  showContentModal("module");
 }
 
 async function saveModule(event) {
@@ -394,10 +539,11 @@ async function saveModule(event) {
 
   const editId = $("[data-module-edit-id]").value.trim();
   const moduleId = editId || slugify(title) || `modulo-${Date.now()}`;
+  const fallbackOrder = editId ? getModuleById(editId)?.order || 1 : getNextOrder(state.modules);
   const payload = {
     title,
     description: $("[data-module-description]").value.trim(),
-    order: toNumber($("[data-module-order]").value, 1),
+    order: toNumber($("[data-module-order]").value, fallbackOrder),
     active: $("[data-module-active]").checked,
     updatedAt: serverTimestamp(),
   };
@@ -408,9 +554,12 @@ async function saveModule(event) {
     if (!existing.exists()) payload.createdAt = serverTimestamp();
 
     await setDoc(moduleRef, payload, { merge: true });
-    setMessage(els.moduleMessage, "Módulo salvo com sucesso.");
+    const successMessage = editId ? "Módulo salvo com sucesso." : "Módulo criado com sucesso.";
+    setMessage(els.moduleMessage, successMessage);
     resetModuleForm();
     await loadModules();
+    setContentNotice(successMessage);
+    hideContentModal();
   } catch (error) {
     setError(els.moduleMessage, "Erro ao salvar módulo.", error);
   }
@@ -455,10 +604,6 @@ async function loadModules() {
 
 function selectModuleForLesson(moduleId) {
   state.selectedModuleId = moduleId;
-  const module = getModuleById(moduleId);
-  if (els.selectedModuleLabel) {
-    els.selectedModuleLabel.textContent = module ? `Aula em: ${module.title || module.id}` : "Selecione um módulo";
-  }
 }
 
 function resetLessonForm() {
@@ -468,24 +613,48 @@ function resetLessonForm() {
   if ($("[data-lesson-order]")) $("[data-lesson-order]").value = "1";
   if ($("[data-lesson-published]")) $("[data-lesson-published]").checked = true;
   renderLessonPreview(null);
+  syncLessonTypeFields();
   setMessage(els.lessonMessage, "", "muted");
 }
 
-function editLesson(moduleId, lessonId) {
-  const lesson = getLessonById(moduleId, lessonId);
-  if (!lesson) return;
-
+function openLessonTypeModal(moduleId) {
   selectModuleForLesson(moduleId);
-  $("[data-lesson-edit-id]").value = lesson.id;
-  $("[data-lesson-title]").value = lesson.title || "";
-  $("[data-lesson-type]").value = lesson.type || "text";
-  $("[data-lesson-content]").value = lesson.content || "";
-  $("[data-lesson-media-url]").value = lesson.mediaUrl || "";
-  $("[data-lesson-order]").value = lesson.order ?? 1;
-  $("[data-lesson-published]").checked = lesson.published !== false;
-  renderLessonPreview(lesson);
-  setMessage(els.lessonMessage, `Editando aula: ${lesson.title || lesson.id}`, "muted");
-  els.lessonForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const module = getModuleById(moduleId);
+  setModalTitle("Adicionar aula ou recurso", module?.title || "Selecione o tipo");
+  showContentModal("type");
+}
+
+function openLessonModal(moduleId, lessonId = null, type = null) {
+  selectModuleForLesson(moduleId);
+  resetLessonForm();
+  const module = getModuleById(moduleId);
+  const lesson = lessonId ? getLessonById(moduleId, lessonId) : null;
+
+  setModalTitle(
+    lesson ? "Editar aula" : "Nova aula ou recurso",
+    lesson ? lesson.title || lesson.id : `${module?.title || "Módulo"} · ${getLessonTypeLabel(type)}`
+  );
+
+  if (type && $("[data-lesson-type]")) {
+    $("[data-lesson-type]").value = type;
+  }
+
+  if (lesson) {
+    $("[data-lesson-edit-id]").value = lesson.id;
+    $("[data-lesson-title]").value = lesson.title || "";
+    $("[data-lesson-type]").value = lesson.type || "text";
+    $("[data-lesson-content]").value = lesson.content || "";
+    $("[data-lesson-media-url]").value = lesson.mediaUrl || "";
+    $("[data-lesson-order]").value = lesson.order ?? 1;
+    $("[data-lesson-published]").checked = lesson.published !== false;
+    renderLessonPreview(lesson);
+    setMessage(els.lessonMessage, `Editando aula: ${lesson.title || lesson.id}`, "muted");
+  } else if ($("[data-lesson-order]")) {
+    $("[data-lesson-order]").value = String(getNextOrder(module?.lessons || []));
+  }
+
+  syncLessonTypeFields();
+  showContentModal("lesson");
 }
 
 function getLessonFormData() {
@@ -494,7 +663,7 @@ function getLessonFormData() {
     type: $("[data-lesson-type]").value,
     content: $("[data-lesson-content]").value.trim(),
     mediaUrl: $("[data-lesson-media-url]").value.trim(),
-    order: toNumber($("[data-lesson-order]").value, 1),
+    order: $("[data-lesson-order]").value,
     published: $("[data-lesson-published]").checked,
   };
 }
@@ -522,7 +691,9 @@ async function saveLesson(event) {
 
   const editId = $("[data-lesson-edit-id]").value.trim();
   const lessonId = editId || slugify(lesson.title) || `aula-${Date.now()}`;
-  const payload = { ...lesson, updatedAt: serverTimestamp() };
+  const selectedModule = getModuleById(state.selectedModuleId);
+  const fallbackOrder = editId ? getLessonById(state.selectedModuleId, editId)?.order || 1 : getNextOrder(selectedModule?.lessons || []);
+  const payload = { ...lesson, order: toNumber(lesson.order, fallbackOrder), updatedAt: serverTimestamp() };
 
   try {
     const lessonRef = doc(db, "courses", state.courseId, "modules", state.selectedModuleId, "lessons", lessonId);
@@ -530,9 +701,12 @@ async function saveLesson(event) {
     if (!existing.exists()) payload.createdAt = serverTimestamp();
 
     await setDoc(lessonRef, payload, { merge: true });
-    setMessage(els.lessonMessage, "Aula salva com sucesso.");
+    const successMessage = editId ? "Aula salva com sucesso." : "Aula criada com sucesso.";
+    setMessage(els.lessonMessage, successMessage);
     resetLessonForm();
     await loadModules();
+    setContentNotice(successMessage);
+    hideContentModal();
   } catch (error) {
     setError(els.lessonMessage, "Erro ao salvar aula.", error);
   }
@@ -588,6 +762,7 @@ function createPreviewLink(url, label) {
 function renderLessonPreview(lesson = getLessonFormData()) {
   if (!els.lessonPreview) return;
   els.lessonPreview.replaceChildren();
+  els.lessonPreview.hidden = false;
 
   if (!lesson || (!lesson.content && !lesson.mediaUrl && !lesson.title)) {
     const placeholder = document.createElement("p");
@@ -645,21 +820,28 @@ function renderModules() {
   if (!state.modules.length) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
-    empty.textContent = "Nenhum módulo encontrado.";
+    empty.textContent = state.editMode
+      ? "Nenhum módulo encontrado. Use + Adicionar novo módulo para começar."
+      : "Nenhum módulo encontrado.";
     els.moduleList.appendChild(empty);
     return;
   }
 
-  state.modules.forEach((module) => {
+  state.modules.forEach((module, moduleIndex) => {
+    const isExpanded = state.expandedModules.has(module.id);
     const block = document.createElement("article");
-    block.className = "admin-module-block";
+    block.className = `admin-module-block ${isExpanded ? "is-expanded" : ""}`;
+    block.dataset.moduleDragId = module.id;
+    block.draggable = state.editMode;
 
-    const header = document.createElement("div");
+    const header = document.createElement("button");
     header.className = "admin-module-header";
+    header.type = "button";
+    header.dataset.moduleExpand = module.id;
 
     const copy = document.createElement("div");
     const eyebrow = document.createElement("span");
-    eyebrow.textContent = `Módulo ${String(module.order || 0).padStart(2, "0")} · ${module.id}`;
+    eyebrow.textContent = `${isExpanded ? "▾" : "▸"} Módulo ${getVisualNumber(moduleIndex)} · ${module.id}`;
     const title = document.createElement("h3");
     title.textContent = module.title || module.id;
     const description = document.createElement("p");
@@ -670,18 +852,27 @@ function renderModules() {
     meta.className = "admin-course-meta";
     meta.append(createBadge(module.active === false ? "Inativo" : "Ativo"), createBadge(`${module.lessons?.length || 0} aulas`));
 
+    header.append(copy, meta);
+    block.appendChild(header);
+
     const actions = document.createElement("div");
     actions.className = "admin-actions";
-    actions.append(
-      createActionButton("Editar módulo", "moduleEdit", module.id),
-      createActionButton("Nova aula", "moduleNewLesson", module.id, "app-button-primary"),
-      createActionButton(module.active === false ? "Ativar" : "Ocultar", "moduleToggle", module.id)
-    );
-
-    header.append(copy, meta, actions);
+    if (state.editMode) {
+      const handle = document.createElement("span");
+      handle.className = "admin-drag-handle";
+      handle.textContent = "⋮⋮ Arrastar";
+      actions.append(
+        handle,
+        createActionButton("Editar módulo", "moduleEdit", module.id),
+        createActionButton("+ Adicionar aula ou recurso", "moduleNewLesson", module.id, "app-button-primary"),
+        createActionButton(module.active === false ? "Ativar" : "Ocultar", "moduleToggle", module.id)
+      );
+      block.appendChild(actions);
+    }
 
     const lessonList = document.createElement("div");
     lessonList.className = "admin-lesson-list";
+    lessonList.hidden = !isExpanded;
 
     if (!module.lessons?.length) {
       const empty = document.createElement("p");
@@ -689,17 +880,21 @@ function renderModules() {
       empty.textContent = "Nenhuma aula cadastrada neste módulo.";
       lessonList.appendChild(empty);
     } else {
-      module.lessons.forEach((lesson) => {
+      module.lessons.forEach((lesson, lessonIndex) => {
         const row = document.createElement("article");
         row.className = "admin-lesson-row";
 
         const lessonCopy = document.createElement("div");
         const lessonEyebrow = document.createElement("span");
-        lessonEyebrow.textContent = `Aula ${String(lesson.order || 0).padStart(2, "0")} · ${lesson.type || "text"}`;
+        lessonEyebrow.textContent = `Aula ${getVisualNumber(lessonIndex)} · ${getLessonIcon(lesson.type)} · ${getLessonTypeLabel(lesson.type)}`;
         const lessonTitle = document.createElement("strong");
         lessonTitle.textContent = lesson.title || lesson.id;
         const lessonDescription = document.createElement("p");
-        lessonDescription.textContent = lesson.content || lesson.mediaUrl || "Sem conteúdo.";
+        lessonDescription.textContent = lesson.mediaUrl
+          ? `${lesson.published === false ? "Rascunho" : "Publicada"} · URL externa cadastrada`
+          : lesson.published === false
+            ? "Rascunho"
+            : "Publicada";
         lessonCopy.append(lessonEyebrow, lessonTitle, lessonDescription);
 
         const lessonMeta = document.createElement("div");
@@ -708,22 +903,81 @@ function renderModules() {
 
         const lessonActions = document.createElement("div");
         lessonActions.className = "admin-actions";
-        const editButton = createActionButton("Editar aula", "lessonEdit", lesson.id);
-        editButton.dataset.lessonModule = module.id;
-        const toggleButton = createActionButton(lesson.published === false ? "Publicar" : "Despublicar", "lessonToggle", lesson.id);
-        toggleButton.dataset.lessonModule = module.id;
-        const previewButton = createActionButton("Preview", "lessonPreview", lesson.id);
-        previewButton.dataset.lessonModule = module.id;
-        lessonActions.append(editButton, toggleButton, previewButton);
 
-        row.append(lessonCopy, lessonMeta, lessonActions);
+        if (state.editMode) {
+          const editButton = createActionButton("Editar", "lessonEdit", lesson.id);
+          editButton.dataset.lessonModule = module.id;
+          const toggleButton = createActionButton(lesson.published === false ? "Publicar" : "Despublicar", "lessonToggle", lesson.id);
+          toggleButton.dataset.lessonModule = module.id;
+          const previewButton = createActionButton("Preview", "lessonPreview", lesson.id);
+          previewButton.dataset.lessonModule = module.id;
+          lessonActions.append(editButton, toggleButton, previewButton);
+        }
+
+        row.append(lessonCopy, lessonMeta);
+        if (state.editMode) row.appendChild(lessonActions);
         lessonList.appendChild(row);
       });
     }
 
-    block.append(header, lessonList);
+    block.appendChild(lessonList);
     els.moduleList.appendChild(block);
   });
+}
+
+function setContentNotice(message) {
+  if (els.contentNote) els.contentNote.textContent = message;
+}
+
+function expandAllModules() {
+  state.modules.forEach((module) => state.expandedModules.add(module.id));
+  renderModules();
+}
+
+function collapseAllModules() {
+  state.expandedModules.clear();
+  renderModules();
+}
+
+async function saveModuleOrder(nextModules) {
+  const batch = writeBatch(db);
+  let hasChanges = false;
+
+  nextModules.forEach((module, index) => {
+    const nextOrder = index + 1;
+    if (Number(module.order || 0) === nextOrder) return;
+    hasChanges = true;
+    batch.update(doc(db, "courses", state.courseId, "modules", module.id), {
+      order: nextOrder,
+      updatedAt: serverTimestamp(),
+    });
+  });
+
+  if (!hasChanges) return;
+
+  await batch.commit();
+  state.modules = nextModules.map((module, index) => ({ ...module, order: index + 1 }));
+  renderModules();
+  setContentNotice("Ordem dos módulos atualizada.");
+}
+
+async function reorderModules(draggedModuleId, targetModuleId) {
+  if (!state.editMode || !draggedModuleId || !targetModuleId || draggedModuleId === targetModuleId) return;
+
+  const current = [...state.modules];
+  const fromIndex = current.findIndex((module) => module.id === draggedModuleId);
+  const toIndex = current.findIndex((module) => module.id === targetModuleId);
+  if (fromIndex < 0 || toIndex < 0) return;
+
+  const [moved] = current.splice(fromIndex, 1);
+  current.splice(toIndex, 0, moved);
+
+  try {
+    await saveModuleOrder(current);
+  } catch (error) {
+    console.error("[ADMIN-COURSE] Erro ao atualizar ordem dos módulos:", error);
+    setContentNotice("Erro ao atualizar ordem dos módulos.");
+  }
 }
 
 async function loadUsers() {
@@ -737,6 +991,13 @@ async function loadEnrollments() {
   const snapshot = await getDocs(collection(db, "enrollments"));
   state.enrollments = snapshot.docs.map((enrollmentDoc) => ({ id: enrollmentDoc.id, ...enrollmentDoc.data() }));
   renderEnrollments();
+}
+
+async function loadProgress() {
+  const snapshot = await getDocs(collection(db, "progress"));
+  state.progress = snapshot.docs
+    .map((progressDoc) => ({ id: progressDoc.id, ...progressDoc.data() }))
+    .filter((item) => item.courseId === state.courseId);
 }
 
 function refreshEnrollmentSelects() {
@@ -782,11 +1043,13 @@ function renderEnrollments() {
     description.textContent = row.userEmail || "Sem e-mail cadastrado.";
 
     const hasCertificate = state.certificates.some((certificate) => certificate.userId === row.userId && certificate.status !== "revoked");
+    const progress = getUserCourseProgress(row.userId);
     const meta = document.createElement("div");
     meta.className = "admin-course-meta";
     meta.append(
       createBadge(row.status || "active"),
       createBadge(`Matrícula: ${formatDate(row.enrolledAt)}`),
+      createBadge(`Progresso: ${progress.completedCount}/${progress.total} (${progress.percent}%)`),
       createBadge(hasCertificate || row.certificateIssued ? "Certificado: sim" : "Certificado: não")
     );
 
@@ -1039,12 +1302,21 @@ function bindEvents() {
   els.certificateForm?.addEventListener("submit", createCertificate);
   els.settingsForm?.addEventListener("submit", saveSettings);
 
-  $("[data-module-new]")?.addEventListener("click", () => {
-    resetModuleForm();
-    els.moduleForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+  els.editModeToggle?.addEventListener("click", toggleEditMode);
+  $("[data-expand-all-modules]")?.addEventListener("click", expandAllModules);
+  $("[data-collapse-all-modules]")?.addEventListener("click", collapseAllModules);
+  $$("[data-module-new]").forEach((button) => {
+    button.addEventListener("click", () => openModuleModal());
   });
-  $("[data-module-cancel]")?.addEventListener("click", resetModuleForm);
-  $("[data-lesson-cancel]")?.addEventListener("click", resetLessonForm);
+  $$("[data-modal-close]").forEach((item) => {
+    item.addEventListener("click", hideContentModal);
+  });
+  $$("[data-lesson-type-choice]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openLessonModal(state.selectedModuleId, null, button.dataset.lessonTypeChoice);
+    });
+  });
+  $("[data-lesson-type]")?.addEventListener("change", syncLessonTypeFields);
   $("[data-lesson-preview-button]")?.addEventListener("click", () => renderLessonPreview());
   $("[data-course-disable]")?.addEventListener("click", disableCourse);
 
@@ -1052,21 +1324,67 @@ function bindEvents() {
     const button = event.target.closest("button");
     if (!button) return;
 
-    if (button.dataset.moduleEdit) editModule(button.dataset.moduleEdit);
+    if (button.dataset.moduleExpand) {
+      if (state.expandedModules.has(button.dataset.moduleExpand)) {
+        state.expandedModules.delete(button.dataset.moduleExpand);
+      } else {
+        state.expandedModules.add(button.dataset.moduleExpand);
+      }
+      renderModules();
+    }
+    if (button.dataset.moduleEdit) openModuleModal(button.dataset.moduleEdit);
     if (button.dataset.moduleToggle) toggleModuleActive(button.dataset.moduleToggle);
     if (button.dataset.moduleNewLesson) {
-      selectModuleForLesson(button.dataset.moduleNewLesson);
-      resetLessonForm();
-      setMessage(els.lessonMessage, "Criando aula neste módulo.", "muted");
-      els.lessonForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+      openLessonTypeModal(button.dataset.moduleNewLesson);
     }
-    if (button.dataset.lessonEdit) editLesson(button.dataset.lessonModule, button.dataset.lessonEdit);
+    if (button.dataset.lessonEdit) openLessonModal(button.dataset.lessonModule, button.dataset.lessonEdit);
     if (button.dataset.lessonToggle) toggleLessonPublished(button.dataset.lessonModule, button.dataset.lessonToggle);
     if (button.dataset.lessonPreview) {
       const lesson = getLessonById(button.dataset.lessonModule, button.dataset.lessonPreview);
+      setModalTitle("Preview da aula", lesson?.title || "Aula");
       renderLessonPreview(lesson);
-      els.lessonPreview?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      showContentModal("preview");
     }
+  });
+
+  els.moduleList?.addEventListener("dragstart", (event) => {
+    if (!state.editMode) return;
+    if (!event.target.closest(".admin-drag-handle")) return;
+    const item = event.target.closest("[data-module-drag-id]");
+    if (!item) return;
+    state.draggedModuleId = item.dataset.moduleDragId;
+    item.classList.add("is-dragging");
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", state.draggedModuleId);
+  });
+
+  els.moduleList?.addEventListener("dragover", (event) => {
+    if (!state.editMode || !state.draggedModuleId) return;
+    const item = event.target.closest("[data-module-drag-id]");
+    if (!item || item.dataset.moduleDragId === state.draggedModuleId) return;
+    event.preventDefault();
+    item.classList.add("is-drop-target");
+  });
+
+  els.moduleList?.addEventListener("dragleave", (event) => {
+    const item = event.target.closest("[data-module-drag-id]");
+    item?.classList.remove("is-drop-target");
+  });
+
+  els.moduleList?.addEventListener("drop", (event) => {
+    if (!state.editMode || !state.draggedModuleId) return;
+    const item = event.target.closest("[data-module-drag-id]");
+    if (!item) return;
+    event.preventDefault();
+    document.querySelectorAll(".is-drop-target").forEach((target) => target.classList.remove("is-drop-target"));
+    reorderModules(state.draggedModuleId, item.dataset.moduleDragId);
+  });
+
+  els.moduleList?.addEventListener("dragend", () => {
+    state.draggedModuleId = "";
+    document.querySelectorAll(".is-dragging, .is-drop-target").forEach((item) => {
+      item.classList.remove("is-dragging", "is-drop-target");
+    });
   });
 
   els.enrollmentList?.addEventListener("click", (event) => {
@@ -1108,7 +1426,7 @@ async function initAdminCoursePage() {
 
   try {
     await loadCourse();
-    await Promise.all([loadUsers(), loadModules(), loadEnrollments(), loadCertificates()]);
+    await Promise.all([loadUsers(), loadModules(), loadEnrollments(), loadCertificates(), loadProgress()]);
     renderEnrollments();
     renderCertificates();
     refreshEnrollmentSelects();

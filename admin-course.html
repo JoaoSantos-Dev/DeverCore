@@ -150,99 +150,25 @@
                   <p class="app-kicker">Conteúdos do curso</p>
                   <h2>Módulos e aulas</h2>
                 </div>
-                <button class="app-button" type="button" data-module-new>Novo módulo</button>
+                <div class="admin-actions">
+                  <button class="app-button" type="button" data-edit-mode-toggle aria-pressed="false">
+                    Modo edição: OFF
+                  </button>
+                  <button class="app-button" type="button" data-expand-all-modules>
+                    Expandir todos
+                  </button>
+                  <button class="app-button" type="button" data-collapse-all-modules>
+                    Recolher todos
+                  </button>
+                  <button class="app-button app-button-primary edit-only" type="button" data-module-new hidden>
+                    + Adicionar novo módulo
+                  </button>
+                </div>
               </div>
 
-              <div class="admin-split">
-                <section class="admin-subpanel">
-                  <div class="admin-panel-header">
-                    <div>
-                      <p class="app-kicker">Módulo</p>
-                      <h3>Organização</h3>
-                    </div>
-                  </div>
-                  <form class="admin-form" data-module-form>
-                    <input type="hidden" data-module-edit-id />
-                    <div class="admin-form-grid compact">
-                      <label>
-                        <span>Título</span>
-                        <input type="text" required data-module-title />
-                      </label>
-                      <label>
-                        <span>Ordem</span>
-                        <input type="number" step="1" value="1" data-module-order />
-                      </label>
-                      <label class="span-2">
-                        <span>Descrição</span>
-                        <textarea rows="3" data-module-description></textarea>
-                      </label>
-                      <label class="check-field">
-                        <input type="checkbox" checked data-module-active />
-                        <span>Ativo</span>
-                      </label>
-                    </div>
-                    <div class="admin-actions">
-                      <button class="app-button app-button-primary" type="submit">Salvar módulo</button>
-                      <button class="app-button" type="button" data-module-cancel>Cancelar</button>
-                    </div>
-                    <p class="app-message" role="status" aria-live="polite" data-module-message></p>
-                  </form>
-                </section>
-
-                <section class="admin-subpanel">
-                  <div class="admin-panel-header">
-                    <div>
-                      <p class="app-kicker">Aula</p>
-                      <h3 data-selected-module-label>Selecione um módulo</h3>
-                    </div>
-                  </div>
-                  <form class="admin-form" data-lesson-form>
-                    <input type="hidden" data-lesson-edit-id />
-                    <div class="admin-form-grid compact">
-                      <label>
-                        <span>Título</span>
-                        <input type="text" required data-lesson-title />
-                      </label>
-                      <label>
-                        <span>Tipo</span>
-                        <select data-lesson-type>
-                          <option value="text">text</option>
-                          <option value="image">image</option>
-                          <option value="video">video</option>
-                          <option value="live">live</option>
-                          <option value="link">link</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span>Ordem</span>
-                        <input type="number" step="1" value="1" data-lesson-order />
-                      </label>
-                      <label>
-                        <span>URL externa</span>
-                        <input type="url" data-lesson-media-url />
-                      </label>
-                      <label class="span-2">
-                        <span>Conteúdo / descrição</span>
-                        <textarea rows="5" data-lesson-content></textarea>
-                      </label>
-                      <label class="check-field">
-                        <input type="checkbox" checked data-lesson-published />
-                        <span>Publicada</span>
-                      </label>
-                    </div>
-                    <div class="admin-actions">
-                      <button class="app-button app-button-primary" type="submit">Salvar aula</button>
-                      <button class="app-button" type="button" data-lesson-cancel>Cancelar</button>
-                      <button class="app-button" type="button" data-lesson-preview-button>Preview</button>
-                    </div>
-                    <p class="app-message" role="status" aria-live="polite" data-lesson-message></p>
-                  </form>
-                  <div class="lesson-panel admin-preview" data-lesson-preview>
-                    <p class="lesson-placeholder">Preview da aula.</p>
-                  </div>
-                </section>
-              </div>
-
+              <p class="admin-note" data-content-note>
+                Ative o modo edição para alterar conteúdos. Com ele desligado, use a lista para revisar a estrutura do curso.
+              </p>
               <div class="admin-module-list" data-admin-module-list></div>
             </section>
 
@@ -380,6 +306,120 @@
         </div>
       </section>
     </main>
+
+    <div class="admin-modal" hidden data-content-modal>
+      <div class="admin-modal-backdrop" data-modal-close></div>
+      <section
+        class="admin-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="content-modal-title"
+      >
+        <div class="admin-panel-header">
+          <div>
+            <p class="app-kicker" data-content-modal-kicker>Conteúdo</p>
+            <h2 id="content-modal-title" data-content-modal-title>Editar conteúdo</h2>
+          </div>
+          <button class="app-button" type="button" data-modal-close>Fechar</button>
+        </div>
+
+        <div class="lesson-type-grid" hidden data-lesson-type-picker>
+          <button class="lesson-type-card" type="button" data-lesson-type-choice="text">
+            <span>Texto</span>
+            <strong>Aula em texto</strong>
+          </button>
+          <button class="lesson-type-card" type="button" data-lesson-type-choice="image">
+            <span>Imagem</span>
+            <strong>Imagem via URL</strong>
+          </button>
+          <button class="lesson-type-card" type="button" data-lesson-type-choice="video">
+            <span>Vídeo</span>
+            <strong>Vídeo via URL</strong>
+          </button>
+          <button class="lesson-type-card" type="button" data-lesson-type-choice="live">
+            <span>Live</span>
+            <strong>Live via URL</strong>
+          </button>
+          <button class="lesson-type-card" type="button" data-lesson-type-choice="link">
+            <span>Link</span>
+            <strong>Material externo</strong>
+          </button>
+        </div>
+
+        <form class="admin-form" hidden data-module-form>
+          <input type="hidden" data-module-edit-id />
+          <div class="admin-form-grid compact">
+            <label>
+              <span>Título</span>
+              <input type="text" required data-module-title />
+            </label>
+            <label>
+              <span>Ordem</span>
+              <input type="number" step="1" value="1" data-module-order />
+            </label>
+            <label class="span-2">
+              <span>Descrição</span>
+              <textarea rows="3" data-module-description></textarea>
+            </label>
+            <label class="check-field">
+              <input type="checkbox" checked data-module-active />
+              <span>Ativo</span>
+            </label>
+          </div>
+          <div class="admin-actions">
+            <button class="app-button app-button-primary" type="submit">Salvar módulo</button>
+            <button class="app-button" type="button" data-modal-close>Cancelar</button>
+          </div>
+          <p class="app-message" role="status" aria-live="polite" data-module-message></p>
+        </form>
+
+        <form class="admin-form" hidden data-lesson-form>
+          <input type="hidden" data-lesson-edit-id />
+          <div class="admin-form-grid compact">
+            <label>
+              <span>Título</span>
+              <input type="text" required data-lesson-title />
+            </label>
+            <label>
+              <span>Tipo</span>
+              <select data-lesson-type>
+                <option value="text">text</option>
+                <option value="image">image</option>
+                <option value="video">video</option>
+                <option value="live">live</option>
+                <option value="link">link</option>
+              </select>
+            </label>
+            <label>
+              <span>Ordem</span>
+              <input type="number" step="1" value="1" data-lesson-order />
+            </label>
+            <label data-lesson-media-field>
+              <span data-lesson-media-label>URL externa</span>
+              <input type="url" data-lesson-media-url />
+            </label>
+            <label class="span-2">
+              <span data-lesson-content-label>Conteúdo / descrição</span>
+              <textarea rows="5" data-lesson-content></textarea>
+            </label>
+            <label class="check-field">
+              <input type="checkbox" checked data-lesson-published />
+              <span>Publicada</span>
+            </label>
+          </div>
+          <div class="admin-actions">
+            <button class="app-button app-button-primary" type="submit">Salvar aula</button>
+            <button class="app-button" type="button" data-lesson-preview-button>Preview</button>
+            <button class="app-button" type="button" data-modal-close>Cancelar</button>
+          </div>
+          <p class="app-message" role="status" aria-live="polite" data-lesson-message></p>
+        </form>
+
+        <div class="lesson-panel admin-preview" hidden data-lesson-preview>
+          <p class="lesson-placeholder">Preview da aula.</p>
+        </div>
+      </section>
+    </div>
 
     <script type="module" src="assets/js/admin-course.js"></script>
   </body>

@@ -567,6 +567,10 @@ input {
 .admin-panel[hidden],
 .admin-content[hidden],
 .admin-course-layout[hidden],
+.admin-modal[hidden],
+.admin-form[hidden],
+.lesson-type-grid[hidden],
+.lesson-panel[hidden],
 .access-denied-panel[hidden],
 .admin-access-card[hidden] {
   display: none;
@@ -843,6 +847,78 @@ input {
   box-shadow: none;
 }
 
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.admin-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.admin-modal-panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 18px;
+  width: min(100%, 760px);
+  max-height: min(92vh, 860px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid rgba(216, 210, 200, 0.14);
+  border-left: 4px solid var(--red-duty);
+  background:
+    linear-gradient(180deg, rgba(32, 32, 32, 0.96), rgba(18, 18, 18, 0.98)),
+    var(--bg-panel);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.48);
+}
+
+.lesson-type-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lesson-type-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  min-height: 110px;
+  padding: 14px;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  background: rgba(8, 8, 8, 0.34);
+  color: var(--text-main);
+  text-align: left;
+}
+
+.lesson-type-card span {
+  color: var(--amber-metal);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.lesson-type-card strong {
+  font-family: var(--font-title);
+  font-size: 1.25rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.lesson-type-card:hover,
+.lesson-type-card:focus-visible {
+  border-color: rgba(194, 138, 59, 0.48);
+  outline: none;
+}
+
 .admin-module-block {
   display: grid;
   gap: 16px;
@@ -853,6 +929,35 @@ input {
   background: rgba(13, 13, 13, 0.48);
 }
 
+.admin-module-block.is-dragging {
+  opacity: 0.58;
+}
+
+.admin-module-block.is-drop-target {
+  border-color: rgba(194, 138, 59, 0.58);
+  box-shadow: inset 0 0 0 1px rgba(194, 138, 59, 0.24);
+}
+
+.admin-drag-handle {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  color: var(--text-dim);
+  cursor: grab;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-module-block > .admin-actions .app-button {
+  min-height: 34px;
+  padding-inline: 10px;
+  font-size: 0.68rem;
+}
+
 .admin-module-header,
 .admin-lesson-row {
   display: grid;
@@ -860,6 +965,20 @@ input {
   gap: 14px;
   align-items: start;
   min-width: 0;
+}
+
+.admin-module-header {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.admin-module-header:hover,
+.admin-module-header:focus-visible {
+  outline: none;
 }
 
 .admin-module-header > .admin-course-meta {
@@ -899,6 +1018,53 @@ input {
   text-transform: uppercase;
 }
 
+.course-progress-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 16px;
+  border: 1px solid rgba(194, 138, 59, 0.22);
+  background: rgba(8, 8, 8, 0.24);
+}
+
+.course-progress-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.course-progress-copy span {
+  color: var(--amber-metal);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.course-progress-copy strong {
+  font-family: var(--font-title);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.course-progress-copy p {
+  margin: 0;
+}
+
+.course-progress-track {
+  height: 9px;
+  overflow: hidden;
+  border: 1px solid rgba(216, 210, 200, 0.12);
+  background: rgba(8, 8, 8, 0.64);
+}
+
+.course-progress-track span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--red-rust), var(--amber-metal));
+}
+
 .course-shell {
   display: grid;
   gap: 18px;
@@ -907,7 +1073,7 @@ input {
 
 .course-layout {
   display: grid;
-  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
   min-width: 0;
@@ -916,6 +1082,146 @@ input {
 .module-sidebar {
   position: sticky;
   top: 100px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.student-module-block {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid rgba(216, 210, 200, 0.1);
+  border-left: 3px solid var(--red-duty);
+  background: rgba(8, 8, 8, 0.26);
+}
+
+.student-module-block + .student-module-block {
+  margin-top: 12px;
+}
+
+.student-module-block.is-complete {
+  border-left-color: var(--amber-metal);
+}
+
+.student-module-toggle {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.student-module-toggle > div {
+  min-width: 0;
+}
+
+.student-module-toggle .admin-course-meta {
+  min-width: 0;
+}
+
+.student-module-toggle span,
+.student-lesson-row span {
+  color: var(--amber-metal);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.module-sidebar .admin-course-meta span {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.student-module-toggle strong {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-title);
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.student-module-toggle p {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.student-module-progress {
+  height: 6px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(216, 210, 200, 0.1);
+  background: rgba(8, 8, 8, 0.58);
+}
+
+.student-module-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--red-rust), var(--amber-metal));
+}
+
+.student-lesson-list {
+  display: grid;
+  gap: 8px;
+}
+
+.student-lesson-row {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(216, 210, 200, 0.1);
+  background: rgba(13, 13, 13, 0.5);
+  color: var(--text-main);
+  text-align: left;
+}
+
+.student-lesson-row:hover,
+.student-lesson-row:focus-visible,
+.student-lesson-row.is-active {
+  border-color: rgba(194, 138, 59, 0.44);
+  outline: none;
+}
+
+.student-lesson-row.is-complete {
+  border-color: rgba(194, 138, 59, 0.32);
+}
+
+.student-lesson-row strong {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.student-lesson-row small {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .module-block + .module-block {
@@ -1006,6 +1312,18 @@ input {
   font-weight: 700;
 }
 
+.lesson-completion {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(216, 210, 200, 0.12);
+}
+
+.lesson-completion p {
+  margin: 0;
+}
+
 @media (max-width: 860px) {
   .app-container {
     width: min(calc(100% - 24px), var(--max-width));
@@ -1051,6 +1369,10 @@ input {
 
   .admin-course-nav {
     position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lesson-type-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1143,7 +1465,20 @@ input {
   }
 
   .admin-module-header,
-  .admin-lesson-row {
+  .admin-lesson-row,
+  .student-module-toggle {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-modal {
+    padding: 10px;
+  }
+
+  .admin-modal-panel {
+    padding: 18px;
+  }
+
+  .lesson-type-grid {
     grid-template-columns: 1fr;
   }
 

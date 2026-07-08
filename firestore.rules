@@ -79,6 +79,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /progress/{progressId} {
+      allow get, list: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create, update: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && isEnrolled(request.resource.data.courseId);
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

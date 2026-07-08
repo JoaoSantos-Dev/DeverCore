@@ -35,7 +35,16 @@
           <p class="app-kicker">Curso</p>
           <h1 data-course-title>Carregando curso...</h1>
           <p data-course-description></p>
-          <span class="role-badge" data-course-progress>Status: carregando</span>
+          <div class="course-progress-panel" data-course-progress>
+            <div class="course-progress-copy">
+              <span>Progresso do curso</span>
+              <strong data-course-progress-label>0% concluído</strong>
+              <p data-course-progress-count>0 de 0 aulas concluídas</p>
+            </div>
+            <div class="course-progress-track" aria-hidden="true">
+              <span data-course-progress-bar></span>
+            </div>
+          </div>
         </header>
 
         <p class="empty-state" role="status" aria-live="polite" hidden data-course-state></p>
