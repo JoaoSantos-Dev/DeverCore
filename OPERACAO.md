@@ -1,5 +1,14 @@
 # Operação da DEVER no plano Spark
 
+## Estrutura de publicação
+
+- `public/` contém todo o site entregue pelo GitHub Pages.
+- `.github/workflows/pages.yml` publica exclusivamente o conteúdo de `public/`.
+- `firestore.rules`, `firestore.indexes.json`, `firebase.json`, seeds e documentação permanecem na raiz e não entram no artefato público.
+- Para testar localmente com Live Server, abra `public/index.html` ou configure `public/` como raiz do servidor.
+
+No GitHub, acesse **Settings > Pages > Build and deployment** e selecione **GitHub Actions** como fonte. O workflow publica automaticamente após pushes na branch `main` que alterem `public/`.
+
 ## Publicação inicial
 
 1. Instale a Firebase CLI e autentique a conta proprietária do projeto.
