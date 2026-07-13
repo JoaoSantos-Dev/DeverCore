@@ -600,6 +600,24 @@ button {
   text-align: right;
 }
 
+.briefing-list .price-readout {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.price-readout s {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.price-readout strong {
+  color: var(--amber-metal);
+  font-size: 0.92rem;
+}
+
 .training-readout {
   padding: clamp(13px, 2.2svh, 16px);
   border: 1px solid rgba(194, 138, 59, 0.34);
@@ -1635,6 +1653,10 @@ button {
 
   .briefing-list dd {
     text-align: left;
+  }
+
+  .briefing-list .price-readout {
+    justify-content: flex-start;
   }
 
   .panel-topbar {

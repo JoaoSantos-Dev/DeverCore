@@ -12,6 +12,8 @@ window.DEVER_COURSE = Object.freeze({
   duration: "5 sábados consecutivos",
   liveHours: "12 horas e 30 minutos ao vivo",
   preparationModule: "Módulo Preparatório Gravado",
+  regularPrice: 120,
+  regularPriceLabel: "R$ 120",
   price: 97,
   priceLabel: "R$ 97",
   registrationUrl: "#contato",
