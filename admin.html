@@ -34,7 +34,7 @@
         <header class="course-hero admin-hero">
           <p class="app-kicker">Admin</p>
           <h1>Painel administrativo</h1>
-          <p>Gerencie cursos e entre em cada treinamento para editar conteúdos, alunos, preços e certificados.</p>
+          <p>Gerencie cursos, alunos, matrículas, conteúdos e contatos interessados.</p>
           <span class="role-badge" data-admin-profile>Carregando dados...</span>
         </header>
 
@@ -72,6 +72,11 @@
               <span class="status-pill">Matrículas</span>
               <h2 data-summary-enrollments>0</h2>
               <p>Acessos ativos</p>
+            </article>
+            <article class="admin-card admin-summary-card">
+              <span class="status-pill">Leads</span>
+              <h2 data-summary-leads>0</h2>
+              <p>Novos contatos</p>
             </article>
           </section>
 
@@ -192,6 +197,29 @@
               Carregando dados...
             </p>
             <div class="admin-list" data-admin-user-list></div>
+          </section>
+
+          <section class="admin-panel" aria-labelledby="leads-title">
+            <div class="admin-panel-header">
+              <div>
+                <p class="app-kicker">Lista de interesse</p>
+                <h2 id="leads-title">Gerenciar leads</h2>
+              </div>
+              <label class="admin-inline-filter">
+                <span>Filtrar por status</span>
+                <select data-lead-filter>
+                  <option value="all">Todos</option>
+                  <option value="new">Novos</option>
+                  <option value="contacted">Contatados</option>
+                  <option value="converted">Convertidos</option>
+                  <option value="archived">Arquivados</option>
+                </select>
+              </label>
+            </div>
+            <p class="admin-note">Os contatos enviados pela landing page aparecem aqui. Use o status para acompanhar o atendimento.</p>
+            <p class="app-message" role="status" aria-live="polite" data-lead-message></p>
+            <p class="empty-state" role="status" aria-live="polite" data-lead-state>Carregando leads...</p>
+            <div class="admin-list" data-lead-list></div>
           </section>
         </div>
       </section>

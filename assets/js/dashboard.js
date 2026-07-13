@@ -7,6 +7,7 @@ import {
   where,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { db } from "./firebase.js";
+import { safeHttpUrl } from "./url.js";
 import {
   displayRole,
   getDisplayName,
@@ -74,7 +75,7 @@ function createEnrolledCourseCard(course, courseId) {
 
   const action = document.createElement("span");
   action.className = "course-card-action";
-  action.textContent = "Acessar curso";
+  action.textContent = "Ver conteúdo do curso";
 
   link.append(eyebrow, title, description, action);
   return link;
@@ -99,8 +100,9 @@ function createAvailableCourseCard(course) {
 
   const action = document.createElement("a");
   action.className = "app-button app-button-primary";
-  if (course.paymentLink) {
-    action.href = course.paymentLink;
+  const paymentLink = safeHttpUrl(course.paymentLink);
+  if (paymentLink) {
+    action.href = paymentLink;
     action.target = "_blank";
     action.rel = "noopener noreferrer";
     action.setAttribute("aria-label", `Comprar ${course.title || "curso"} em uma nova aba`);
@@ -183,8 +185,11 @@ async function loadStudentDashboard() {
   if (!user) return;
 
   const profile = await getUserProfile(user.uid);
-  const enrolledIds = Array.isArray(profile?.enrolledCourses) ? profile.enrolledCourses : [];
-  // Futuramente, as matriculas podem migrar para a colecao enrollments.
+  const enrollmentSnapshot = await getDocs(query(collection(db, "enrollments"), where("userId", "==", user.uid)));
+  const enrolledIds = enrollmentSnapshot.docs
+    .map((item) => item.data())
+    .filter((item) => item.status === "active")
+    .map((item) => item.courseId);
   const role = normalizeRole(profile?.role);
 
   if (nameEl) nameEl.textContent = getDisplayName(user, profile);

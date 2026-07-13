@@ -3,8 +3,6 @@ document.documentElement.classList.add("js-enabled");
 const header = document.querySelector("[data-header]");
 const menuToggle = document.querySelector("[data-menu-toggle]");
 const nav = document.querySelector("[data-nav]");
-const form = document.querySelector("[data-form]");
-const formMessage = document.querySelector("[data-form-message]");
 const revealItems = document.querySelectorAll("[data-reveal]");
 
 function setHeaderState() {
@@ -66,21 +64,6 @@ document.querySelectorAll('a[href^="#"]').forEach((link) => {
 
 window.addEventListener("scroll", setHeaderState, { passive: true });
 setHeaderState();
-
-form?.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  if (!form.checkValidity()) {
-    form.reportValidity();
-    return;
-  }
-
-  form.reset();
-  if (formMessage) {
-    formMessage.textContent =
-      "Interesse registrado visualmente. Em breve o formulário será conectado a uma ferramenta de envio.";
-  }
-});
 
 if ("IntersectionObserver" in window) {
   const observer = new IntersectionObserver(

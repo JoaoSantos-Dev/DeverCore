@@ -10,6 +10,7 @@ import {
   where,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { db } from "./firebase.js";
+import { safeHttpUrl } from "./url.js";
 import { getUserProfile, logout, normalizeRole, requireAuth } from "./auth.js";
 
 const state = {
@@ -21,6 +22,7 @@ const state = {
   progress: new Map(),
   expandedModules: new Set(),
   selectedLesson: null,
+  lastViewedLessonId: "",
   canWriteProgress: false,
 };
 
@@ -33,6 +35,8 @@ const courseHero = document.querySelector("[data-course-hero]");
 const courseContent = document.querySelector("[data-course-content]");
 const moduleList = document.querySelector("[data-module-list]");
 const lessonContent = document.querySelector("[data-lesson-content]");
+const courseOverview = document.querySelector("[data-course-overview]");
+const continueButton = document.querySelector("[data-continue-course]");
 const stateEl = document.querySelector("[data-course-state]");
 const logoutButtons = document.querySelectorAll("[data-logout]");
 
@@ -64,12 +68,10 @@ function getCourseId() {
   return new URLSearchParams(window.location.search).get("id");
 }
 
-function isEnrolled(profile, courseId) {
-  return Array.isArray(profile?.enrolledCourses) && profile.enrolledCourses.includes(courseId);
-}
-
-function canAccessCourse(profile, courseId) {
-  return normalizeRole(profile?.role) === "admin" || isEnrolled(profile, courseId);
+async function hasActiveEnrollment(userId, courseId) {
+  if (!userId || !courseId) return false;
+  const snapshot = await getDoc(doc(db, "enrollments", `${userId}_${courseId}`));
+  return snapshot.exists() && snapshot.data().userId === userId && snapshot.data().courseId === courseId && snapshot.data().status === "active";
 }
 
 function sortByOrder(items) {
@@ -123,6 +125,36 @@ function getPublishedLessons(module = null) {
       .filter((lesson) => lesson.published !== false)
       .map((lesson) => ({ ...lesson, moduleId: item.id }));
   });
+}
+
+function getLessonDuration(lesson) {
+  const value = lesson.durationMinutes ?? lesson.duration;
+  const minutes = Number(value);
+  return Number.isFinite(minutes) && minutes > 0 ? `${minutes} min` : "";
+}
+
+function getLessonSequence() {
+  return state.modules.flatMap((module) => getPublishedLessons(module));
+}
+
+function selectLesson(lesson, shouldScroll = true) {
+  if (!lesson) return;
+  state.selectedLesson = lesson;
+  state.lastViewedLessonId = lesson.id;
+  localStorage.setItem(`dever:last-lesson:${state.user.uid}:${state.courseId}`, lesson.id);
+  state.expandedModules.add(lesson.moduleId);
+  renderStudentCourse();
+  if (courseOverview) courseOverview.hidden = true;
+  if (lessonContent) lessonContent.hidden = false;
+  if (shouldScroll) lessonContent?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function showCourseOverview() {
+  state.selectedLesson = null;
+  if (courseOverview) courseOverview.hidden = false;
+  if (lessonContent) lessonContent.hidden = true;
+  renderStudentModules();
+  courseOverview?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function calculateModuleProgress(module) {
@@ -222,7 +254,7 @@ function setupYouTubeCompletionTracking(containerId, videoId, lesson) {
 function createExternalLink(url, label = "Abrir material") {
   const link = document.createElement("a");
   link.className = "app-button app-button-secondary";
-  link.href = url;
+  link.href = safeHttpUrl(url) || "#";
   link.target = "_blank";
   link.rel = "noopener noreferrer";
   link.textContent = label;
@@ -257,6 +289,7 @@ function renderStudentModules() {
     toggle.className = "student-module-toggle";
     toggle.type = "button";
     toggle.dataset.studentModuleToggle = module.id;
+    toggle.setAttribute("aria-expanded", String(isExpanded));
 
     const copy = document.createElement("div");
     const eyebrow = document.createElement("span");
@@ -269,9 +302,12 @@ function renderStudentModules() {
 
     const meta = document.createElement("div");
     meta.className = "admin-course-meta";
+    const totalMinutes = getPublishedLessons(module).reduce((total, lesson) => total + (Number(lesson.durationMinutes ?? lesson.duration) || 0), 0);
     meta.append(
+      createBadge(`${progress.total} ${progress.total === 1 ? "aula" : "aulas"}`),
       createBadge(`${progress.completed}/${progress.total} concluídas`),
-      createBadge(progress.done ? "Módulo concluído" : `${progress.percent}%`)
+      createBadge(progress.done ? "Módulo concluído" : `${progress.percent}%`),
+      ...(totalMinutes > 0 ? [createBadge(`${totalMinutes} min estimados`)] : [])
     );
 
     const progressTrack = document.createElement("div");
@@ -312,7 +348,11 @@ function renderStudentModules() {
         name.textContent = lesson.title || lesson.id;
 
         const status = document.createElement("small");
-        status.textContent = completed ? "Concluída" : getLessonTypeLabel(lesson.type);
+        const duration = getLessonDuration(lesson);
+        const activityStatus = completed ? "Concluída" : state.lastViewedLessonId === lesson.id ? "Em andamento" : "Não iniciada";
+        status.textContent = [activityStatus, getLessonTypeLabel(lesson.type), duration]
+          .filter(Boolean)
+          .join(" · ");
 
         row.append(label, name, status);
         lessons.appendChild(row);
@@ -337,6 +377,23 @@ function renderStudentLesson(lesson = state.selectedLesson) {
   }
 
   const completed = isLessonCompleted(lesson);
+  const sequence = getLessonSequence();
+  const currentIndex = sequence.findIndex((item) => item.id === lesson.id && item.moduleId === lesson.moduleId);
+  const previousLesson = currentIndex > 0 ? sequence[currentIndex - 1] : null;
+  const nextLesson = currentIndex >= 0 && currentIndex < sequence.length - 1 ? sequence[currentIndex + 1] : null;
+
+  const topNav = document.createElement("div");
+  topNav.className = "lesson-top-nav";
+  const overviewButton = document.createElement("button");
+  overviewButton.className = "app-button";
+  overviewButton.type = "button";
+  overviewButton.textContent = "← Visão geral do curso";
+  overviewButton.addEventListener("click", showCourseOverview);
+  const position = document.createElement("span");
+  position.textContent = `Aula ${currentIndex + 1} de ${sequence.length}`;
+  topNav.append(overviewButton, position);
+  lessonContent.appendChild(topNav);
+
   const header = document.createElement("div");
   header.className = "lesson-header";
 
@@ -412,6 +469,24 @@ function renderStudentLesson(lesson = state.selectedLesson) {
 
   status.append(statusText, button);
   lessonContent.appendChild(status);
+
+  const navigation = document.createElement("nav");
+  navigation.className = "lesson-navigation";
+  navigation.setAttribute("aria-label", "Navegação entre aulas");
+  const previous = document.createElement("button");
+  previous.className = "app-button";
+  previous.type = "button";
+  previous.disabled = !previousLesson;
+  previous.textContent = previousLesson ? `← ${previousLesson.title || "Aula anterior"}` : "← Aula anterior";
+  previous.addEventListener("click", () => selectLesson(previousLesson));
+  const next = document.createElement("button");
+  next.className = "app-button app-button-primary";
+  next.type = "button";
+  next.disabled = !nextLesson;
+  next.textContent = nextLesson ? `${nextLesson.title || "Próxima aula"} →` : "Fim do curso";
+  next.addEventListener("click", () => selectLesson(nextLesson));
+  navigation.append(previous, next);
+  lessonContent.appendChild(navigation);
 }
 
 function renderStudentCourse() {
@@ -485,11 +560,11 @@ async function loadModulesAndLessons(courseId, includeUnpublished = false) {
 }
 
 async function loadUserProgress() {
-  const snapshot = await getDocs(query(collection(db, "progress"), where("userId", "==", state.user.uid)));
+  const snapshot = await getDocs(query(collection(db, "progress"), where("userId", "==", state.user.uid), where("courseId", "==", state.courseId)));
   state.progress = new Map(
     snapshot.docs
       .map((progressDoc) => ({ id: progressDoc.id, ...progressDoc.data() }))
-      .filter((item) => item.courseId === state.courseId && item.status === "completed")
+      .filter((item) => item.status === "completed")
       .map((item) => [item.lessonId, item])
   );
 }
@@ -513,15 +588,24 @@ function bindCourseEvents() {
       const module = state.modules.find((item) => item.id === button.dataset.studentModule);
       const lesson = module?.lessons?.find((item) => item.id === button.dataset.studentLesson);
       if (!lesson) return;
-      state.selectedLesson = lesson;
-      state.expandedModules.add(module.id);
-      renderStudentCourse();
-      lessonContent?.scrollIntoView({ behavior: "smooth", block: "start" });
+      selectLesson(lesson);
     }
+  });
+
+  continueButton?.addEventListener("click", () => selectLesson(findInitialLesson()));
+  document.querySelector("[data-expand-course]")?.addEventListener("click", () => {
+    state.modules.forEach((module) => state.expandedModules.add(module.id));
+    renderStudentModules();
+  });
+  document.querySelector("[data-collapse-course]")?.addEventListener("click", () => {
+    state.expandedModules.clear();
+    renderStudentModules();
   });
 }
 
 function findInitialLesson() {
+  const lastViewed = getLessonSequence().find((lesson) => lesson.id === state.lastViewedLessonId && !isLessonCompleted(lesson));
+  if (lastViewed) return lastViewed;
   for (const module of state.modules) {
     const pendingLesson = getPublishedLessons(module).find((lesson) => !isLessonCompleted(lesson));
     if (pendingLesson) return pendingLesson;
@@ -537,10 +621,10 @@ async function loadCourseForStudent() {
 
   state.courseId = getCourseId();
   state.profile = await getUserProfile(state.user.uid);
-  state.canWriteProgress = isEnrolled(state.profile, state.courseId);
   const isAdminProfile = normalizeRole(state.profile?.role) === "admin";
+  state.canWriteProgress = await hasActiveEnrollment(state.user.uid, state.courseId);
 
-  if (!state.courseId || !canAccessCourse(state.profile, state.courseId)) {
+  if (!state.courseId || (!isAdminProfile && !state.canWriteProgress)) {
     setState("Curso não encontrado ou acesso não liberado.", {
       hideHero: true,
       hideContent: true,
@@ -572,6 +656,7 @@ async function loadCourseForStudent() {
 
   await loadModulesAndLessons(state.courseId, isAdminProfile);
   await loadUserProgress();
+  state.lastViewedLessonId = localStorage.getItem(`dever:last-lesson:${state.user.uid}:${state.courseId}`) || "";
 
   const hasLessons = state.modules.some((module) => getPublishedLessons(module).length);
   if (!hasLessons) {
@@ -579,13 +664,14 @@ async function loadCourseForStudent() {
     return;
   }
 
-  state.selectedLesson = findInitialLesson();
-  if (state.selectedLesson?.moduleId) {
-    state.expandedModules.add(state.selectedLesson.moduleId);
-  } else {
-    const firstModule = state.modules.find((module) => getPublishedLessons(module).length);
-    if (firstModule) state.expandedModules.add(firstModule.id);
+  state.selectedLesson = null;
+  state.modules.forEach((module) => state.expandedModules.add(module.id));
+  if (continueButton) {
+    const progress = calculateCourseProgress();
+    continueButton.textContent = progress.done ? "Rever curso" : progress.completed ? "Continuar curso" : "Começar curso";
   }
+  if (courseOverview) courseOverview.hidden = false;
+  if (lessonContent) lessonContent.hidden = true;
   renderStudentCourse();
 }
 

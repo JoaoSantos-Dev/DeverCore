@@ -2,63 +2,45 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
+    function signedIn() { return request.auth != null; }
+    function userPath() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function hasUser() { return signedIn() && exists(userPath()); }
+    function user() { return get(userPath()).data; }
+    function isAdmin() { return hasUser() && user().role == "admin" && user().active == true; }
 
-    function hasCurrentUserDoc() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    function enrollmentPath(courseId) {
+      return /databases/$(database)/documents/enrollments/$(request.auth.uid + "_" + courseId);
     }
-
-    function currentUserDoc() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
-
-    function currentRole() {
-      return hasCurrentUserDoc() ? currentUserDoc().data.role : "estudante";
-    }
-
-    function currentUserActive() {
-      return hasCurrentUserDoc() && currentUserDoc().data.active == true;
-    }
-
-    function isAdmin() {
-      return signedIn() && currentRole() == "admin" && currentUserActive();
-    }
-
     function isEnrolled(courseId) {
-      return hasCurrentUserDoc()
-        && currentUserDoc().data.enrolledCourses is list
-        && currentUserDoc().data.enrolledCourses.hasAny([courseId]);
-    }
-
-    function isPublicVisibleCourse() {
       return signedIn()
-        && resource.data.active == true
-        && resource.data.visible == true;
+        && exists(enrollmentPath(courseId))
+        && get(enrollmentPath(courseId)).data.userId == request.auth.uid
+        && get(enrollmentPath(courseId)).data.courseId == courseId
+        && get(enrollmentPath(courseId)).data.status == "active";
+    }
+    function publicCourse() {
+      return signedIn() && resource.data.active == true && resource.data.visible == true;
     }
 
     match /users/{userId} {
       allow get: if signedIn() && (request.auth.uid == userId || isAdmin());
-      allow list: if isAdmin();
-      allow create, update: if isAdmin();
+      allow list, create, update: if isAdmin();
       allow delete: if false;
     }
 
     match /courses/{courseId} {
-      allow get: if isAdmin() || isEnrolled(courseId) || isPublicVisibleCourse();
-      allow list: if isAdmin() || isPublicVisibleCourse();
+      allow get: if isAdmin() || isEnrolled(courseId) || publicCourse();
+      allow list: if isAdmin() || publicCourse();
       allow create, update: if isAdmin();
       allow delete: if false;
 
       match /modules/{moduleId} {
-        allow get, list: if isAdmin() || isEnrolled(courseId);
+        allow read: if isAdmin() || isEnrolled(courseId);
         allow create, update: if isAdmin();
         allow delete: if false;
 
         match /lessons/{lessonId} {
-          allow get, list: if isAdmin() || isEnrolled(courseId);
+          allow read: if isAdmin() || isEnrolled(courseId);
           allow create, update: if isAdmin();
           allow delete: if false;
         }
@@ -66,30 +48,57 @@ service cloud.firestore {
     }
 
     match /enrollments/{enrollmentId} {
-      allow get, list: if isAdmin()
-        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow get, list: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
       allow create, update: if isAdmin();
       allow delete: if false;
     }
 
     match /certificates/{certificateId} {
-      allow get, list: if isAdmin()
-        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow get, list: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
       allow create, update: if isAdmin();
       allow delete: if false;
     }
 
     match /progress/{progressId} {
-      allow get, list: if isAdmin()
-        || (signedIn() && resource.data.userId == request.auth.uid);
-      allow create, update: if signedIn()
-        && request.resource.data.userId == request.auth.uid
-        && isEnrolled(request.resource.data.courseId);
+      allow get, list: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create: if validProgress(progressId);
+      allow update: if validProgress(progressId)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.courseId == resource.data.courseId
+        && request.resource.data.moduleId == resource.data.moduleId
+        && request.resource.data.lessonId == resource.data.lessonId;
       allow delete: if false;
     }
 
-    match /{document=**} {
-      allow read, write: if false;
+    function validProgress(progressId) {
+      return signedIn()
+        && request.resource.data.keys().hasOnly([
+          "userId", "courseId", "moduleId", "lessonId", "status", "completedAt", "type"
+        ])
+        && request.resource.data.keys().hasAll([
+          "userId", "courseId", "moduleId", "lessonId", "status", "completedAt", "type"
+        ])
+        && request.resource.data.userId == request.auth.uid
+        && progressId == request.auth.uid + "_" + request.resource.data.courseId + "_" + request.resource.data.lessonId
+        && request.resource.data.status == "completed"
+        && request.resource.data.type in ["manual", "video_auto"]
+        && isEnrolled(request.resource.data.courseId)
+        && exists(/databases/$(database)/documents/courses/$(request.resource.data.courseId)/modules/$(request.resource.data.moduleId)/lessons/$(request.resource.data.lessonId));
     }
+
+    match /leads/{leadId} {
+      allow create: if request.resource.data.keys().hasOnly(["name", "email", "whatsapp", "consent", "source", "status", "createdAt"])
+        && request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 100
+        && request.resource.data.email is string && request.resource.data.email.size() >= 5 && request.resource.data.email.size() <= 254
+        && request.resource.data.whatsapp is string && request.resource.data.whatsapp.size() >= 8 && request.resource.data.whatsapp.size() <= 30
+        && request.resource.data.consent == true
+        && request.resource.data.source == "landing-page"
+        && request.resource.data.status == "new"
+        && request.resource.data.createdAt == request.time;
+      allow read, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /{document=**} { allow read, write: if false; }
   }
 }

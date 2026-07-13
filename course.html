@@ -49,13 +49,24 @@
 
         <p class="empty-state" role="status" aria-live="polite" hidden data-course-state></p>
 
-        <div class="course-layout" data-course-content>
-          <aside class="module-sidebar" aria-label="Módulos e aulas">
-            <p class="app-kicker">Módulos</p>
+        <div class="course-content-stack" data-course-content>
+          <section class="course-overview" data-course-overview aria-labelledby="course-content-title">
+            <div class="course-overview-header">
+              <div>
+                <p class="app-kicker">Conteúdo do curso</p>
+                <h2 id="course-content-title">Módulos e aulas</h2>
+                <p>Veja toda a jornada do curso e acompanhe seu progresso por atividade.</p>
+              </div>
+              <button class="app-button app-button-primary" type="button" data-continue-course>Continuar curso</button>
+            </div>
+            <div class="course-overview-actions">
+              <button class="app-button" type="button" data-expand-course>Expandir todos</button>
+              <button class="app-button" type="button" data-collapse-course>Recolher todos</button>
+            </div>
             <div data-module-list></div>
-          </aside>
+          </section>
 
-          <article class="lesson-panel" data-lesson-content>
+          <article class="lesson-panel" data-lesson-content hidden>
             <div class="lesson-placeholder">
               Selecione uma aula para começar.
             </div>

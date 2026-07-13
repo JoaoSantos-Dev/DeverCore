@@ -20,9 +20,6 @@ export async function requireAuth() {
     window.location.replace("login.html");
     return null;
   }
-  console.log("[AUTH] Usuário autenticado atual:", user);
-  console.log("[AUTH] UID:", user.uid);
-  console.log("[AUTH] E-mail:", user.email);
   return user;
 }
 
@@ -36,8 +33,6 @@ export async function redirectIfAuthenticated() {
 export async function getUserProfile(uid) {
   if (cachedProfileUid === uid && cachedProfile) return cachedProfile;
   const snapshot = await getDoc(doc(db, "users", uid));
-  console.log(`[AUTH] Documento users/${uid} existe:`, snapshot.exists());
-  console.log("[AUTH] Documento users/{uid}:", snapshot.exists() ? snapshot.data() : null);
   if (!snapshot.exists()) return null;
   cachedProfileUid = uid;
   cachedProfile = { id: snapshot.id, ...snapshot.data() };
@@ -65,10 +60,6 @@ export async function requireAdmin() {
   const role = normalizeRole(profile?.role);
   const active = profile?.active === true;
   const authorized = Boolean(profile) && role === "admin" && active;
-
-  console.log("[AUTH] Perfil:", profile);
-  console.log("[AUTH] Role:", profile?.role);
-  console.log("[AUTH] Active:", profile?.active);
 
   if (!profile) {
     return {

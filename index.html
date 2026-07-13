@@ -399,6 +399,10 @@
             </div>
 
             <form class="interest-form" aria-describedby="form-message" data-form data-reveal>
+              <div class="form-trap" aria-hidden="true">
+                <label for="website">Não preencha este campo</label>
+                <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" data-honeypot />
+              </div>
               <div class="form-row">
                 <label for="name">Nome</label>
                 <input id="name" name="name" type="text" autocomplete="name" required />
@@ -418,6 +422,10 @@
                   required
                 />
               </div>
+              <label class="consent-field">
+                <input name="consent" type="checkbox" required data-consent />
+                <span>Concordo em receber informações sobre a turma e li a <a href="privacidade.html">Política de Privacidade</a>.</span>
+              </label>
               <button class="btn btn-primary form-submit" type="submit">
                 Registrar interesse
               </button>
@@ -444,6 +452,8 @@
             <a href="#fundadora">Turma Fundadora</a>
             <a href="login.html">Área do aluno</a>
             <a href="#contato">Contato</a>
+            <a href="privacidade.html">Privacidade</a>
+            <a href="termos.html">Termos</a>
           </nav>
           <p class="copyright">© 2026 DEVER. Todos os direitos reservados.</p>
         </div>
@@ -451,5 +461,6 @@
     </div>
 
     <script src="script.js"></script>
+    <script type="module" src="assets/js/leads.js"></script>
   </body>
 </html>

@@ -3,12 +3,15 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { db } from "./firebase.js";
 import { displayRole, getDisplayName, logout, normalizeRole, requireAdmin } from "./auth.js";
+import { safeHttpUrl } from "./url.js";
 
 const state = {
   adminUser: null,
@@ -16,6 +19,7 @@ const state = {
   courses: [],
   users: [],
   enrollments: [],
+  leads: [],
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -31,6 +35,7 @@ const els = {
   summaryActiveCourses: $("[data-summary-active-courses]"),
   summaryUsers: $("[data-summary-users]"),
   summaryEnrollments: $("[data-summary-enrollments]"),
+  summaryLeads: $("[data-summary-leads]"),
   courseForm: $("[data-course-form]"),
   courseMessage: $("[data-course-message]"),
   courseList: $("[data-admin-course-list]"),
@@ -39,6 +44,10 @@ const els = {
   userMessage: $("[data-user-message]"),
   userList: $("[data-admin-user-list]"),
   userState: $("[data-admin-users-state]"),
+  leadFilter: $("[data-lead-filter]"),
+  leadMessage: $("[data-lead-message]"),
+  leadList: $("[data-lead-list]"),
+  leadState: $("[data-lead-state]"),
 };
 
 $$("[data-logout]").forEach((button) => {
@@ -59,9 +68,9 @@ function setMessage(element, message, type = "success") {
 }
 
 function formatFirebaseError(error, fallback = "Falha desconhecida") {
-  const code = error?.code || "";
-  const message = error?.message || fallback;
-  return `Erro: ${code} ${message}`.trim();
+  if (error?.code === "permission-denied") return "Você não tem permissão para realizar esta operação.";
+  if (error?.code === "unavailable") return "O serviço está temporariamente indisponível. Tente novamente.";
+  return fallback;
 }
 
 function logAdminError(context, error) {
@@ -151,6 +160,112 @@ function updateSummary() {
     els.summaryEnrollments.textContent = String(
       state.enrollments.filter((enrollment) => enrollment.status !== "inactive").length
     );
+  }
+  if (els.summaryLeads) {
+    els.summaryLeads.textContent = String(state.leads.filter((lead) => (lead.status || "new") === "new").length);
+  }
+}
+
+function formatDateTime(value) {
+  if (!value) return "Data não disponível";
+  const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+  if (Number.isNaN(date.getTime())) return "Data não disponível";
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(date);
+}
+
+const leadStatusLabels = {
+  new: "Novo",
+  contacted: "Contatado",
+  converted: "Convertido",
+  archived: "Arquivado",
+};
+
+async function loadLeads() {
+  if (els.leadState) {
+    els.leadState.hidden = false;
+    els.leadState.textContent = "Carregando leads...";
+  }
+  try {
+    const snapshot = await getDocs(collection(db, "leads"));
+    state.leads = snapshot.docs
+      .map((leadDoc) => ({ id: leadDoc.id, ...leadDoc.data() }))
+      .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    renderLeads();
+    updateSummary();
+  } catch (error) {
+    setStateError(els.leadState, "Erro ao carregar leads.", error);
+  }
+}
+
+function renderLeads() {
+  if (!els.leadList || !els.leadState) return;
+  els.leadList.replaceChildren();
+  const filter = els.leadFilter?.value || "all";
+  const leads = state.leads.filter((lead) => filter === "all" || (lead.status || "new") === filter);
+
+  if (!leads.length) {
+    els.leadState.hidden = false;
+    els.leadState.textContent = filter === "all" ? "Nenhum lead cadastrado." : "Nenhum lead com este status.";
+    return;
+  }
+
+  els.leadState.hidden = true;
+  leads.forEach((lead) => {
+    const item = document.createElement("article");
+    item.className = "admin-course-item compact";
+
+    const eyebrow = document.createElement("span");
+    eyebrow.textContent = `${leadStatusLabels[lead.status || "new"] || "Novo"} · ${formatDateTime(lead.createdAt)}`;
+
+    const title = document.createElement("strong");
+    title.textContent = lead.name || "Contato sem nome";
+
+    const description = document.createElement("p");
+    description.textContent = `${lead.email || "Sem e-mail"} · ${lead.whatsapp || "Sem WhatsApp"}`;
+
+    const contactLinks = document.createElement("div");
+    contactLinks.className = "lead-contact-links";
+    if (lead.email) {
+      const emailLink = document.createElement("a");
+      emailLink.className = "app-button";
+      emailLink.href = `mailto:${lead.email}`;
+      emailLink.textContent = "Enviar e-mail";
+      contactLinks.appendChild(emailLink);
+    }
+    const phone = String(lead.whatsapp || "").replace(/\D/g, "");
+    if (phone) {
+      const whatsappLink = document.createElement("a");
+      whatsappLink.className = "app-button";
+      whatsappLink.href = `https://wa.me/${phone}`;
+      whatsappLink.target = "_blank";
+      whatsappLink.rel = "noopener noreferrer";
+      whatsappLink.textContent = "Abrir WhatsApp";
+      contactLinks.appendChild(whatsappLink);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "admin-actions";
+    Object.entries(leadStatusLabels).forEach(([status, label]) => {
+      if ((lead.status || "new") === status) return;
+      actions.appendChild(createActionButton(label, "leadStatus", `${lead.id}:${status}`));
+    });
+
+    item.append(eyebrow, title, description, contactLinks, actions);
+    els.leadList.appendChild(item);
+  });
+}
+
+async function updateLeadStatus(leadId, status) {
+  if (!leadStatusLabels[status]) return;
+  try {
+    await updateDoc(doc(db, "leads", leadId), { status, updatedAt: serverTimestamp() });
+    const lead = state.leads.find((item) => item.id === leadId);
+    if (lead) lead.status = status;
+    setMessage(els.leadMessage, `Lead marcado como ${leadStatusLabels[status].toLowerCase()}.`);
+    renderLeads();
+    updateSummary();
+  } catch (error) {
+    setError(els.leadMessage, "Erro ao atualizar lead.", error);
   }
 }
 
@@ -276,6 +391,12 @@ async function saveCourse(event) {
   }
 
   const courseId = editId || slug;
+  const paymentInput = $("[data-course-payment-link]").value.trim();
+  const paymentLink = safeHttpUrl(paymentInput);
+  if (paymentInput && !paymentLink) {
+    setMessage(els.courseMessage, "O link de pagamento deve ser uma URL HTTPS válida.", "error");
+    return;
+  }
   const payload = {
     title,
     slug,
@@ -283,7 +404,7 @@ async function saveCourse(event) {
     price: toNumber($("[data-course-price]").value, 0),
     currency: ($("[data-course-currency]").value.trim() || "BRL").toUpperCase(),
     salePrice: optionalNumber($("[data-course-sale-price]").value),
-    paymentLink: $("[data-course-payment-link]").value.trim(),
+    paymentLink,
     active: $("[data-course-active]").checked,
     visible: $("[data-course-visible]").checked,
     order: toNumber($("[data-course-order]").value, 1),
@@ -367,7 +488,7 @@ function renderUsers() {
     meta.append(
       createBadge(displayRole(user.role)),
       createBadge(user.active === false ? "Inativo" : "Ativo"),
-      createBadge(`${Array.isArray(user.enrolledCourses) ? user.enrolledCourses.length : 0} cursos`)
+      createBadge("Matrículas gerenciadas por curso")
     );
 
     const actions = document.createElement("div");
@@ -430,7 +551,6 @@ async function saveUserProfile(event) {
       email,
       role: normalizeRole($("[data-user-role]").value),
       active: $("[data-user-active]").checked,
-      enrolledCourses: Array.isArray(existingData?.enrolledCourses) ? existingData.enrolledCourses : [],
       updatedAt: serverTimestamp(),
     };
 
@@ -463,7 +583,7 @@ async function toggleUserActive(userId) {
 
 async function loadEnrollmentsSummary() {
   try {
-    const snapshot = await getDocs(collection(db, "enrollments"));
+    const snapshot = await getDocs(query(collection(db, "enrollments"), where("status", "==", "active")));
     state.enrollments = snapshot.docs.map((enrollmentDoc) => ({ id: enrollmentDoc.id, ...enrollmentDoc.data() }));
     updateSummary();
   } catch (error) {
@@ -493,6 +613,14 @@ function bindEvents() {
     if (!button) return;
     if (button.dataset.userEdit) editUser(button.dataset.userEdit);
     if (button.dataset.userToggleActive) toggleUserActive(button.dataset.userToggleActive);
+  });
+
+  els.leadFilter?.addEventListener("change", renderLeads);
+  els.leadList?.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-lead-status]");
+    if (!button) return;
+    const separator = button.dataset.leadStatus.lastIndexOf(":");
+    updateLeadStatus(button.dataset.leadStatus.slice(0, separator), button.dataset.leadStatus.slice(separator + 1));
   });
 }
 
@@ -529,7 +657,7 @@ async function initAdminPage() {
   if (els.adminDenied) els.adminDenied.hidden = true;
   if (els.adminContent) els.adminContent.hidden = false;
 
-  await Promise.all([loadCourses(), loadUsers(), loadEnrollmentsSummary()]);
+  await Promise.all([loadCourses(), loadUsers(), loadEnrollmentsSummary(), loadLeads()]);
 }
 
 initAdminPage().catch((error) => {

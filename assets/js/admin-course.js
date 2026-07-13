@@ -1,17 +1,18 @@
 import {
-  arrayRemove,
-  arrayUnion,
   collection,
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import { db } from "./firebase.js";
 import { logout, normalizeRole, requireAdmin } from "./auth.js";
+import { safeHttpUrl } from "./url.js";
 
 const state = {
   adminUser: null,
@@ -97,9 +98,9 @@ function setMessage(element, message, type = "success") {
 }
 
 function formatFirebaseError(error, fallback = "Falha desconhecida") {
-  const code = error?.code || "";
-  const message = error?.message || fallback;
-  return `Erro: ${code} ${message}`.trim();
+  if (error?.code === "permission-denied") return "Você não tem permissão para realizar esta operação.";
+  if (error?.code === "unavailable") return "O serviço está temporariamente indisponível. Tente novamente.";
+  return fallback;
 }
 
 function logAdminError(context, error) {
@@ -383,30 +384,6 @@ function getEnrollmentRows() {
       });
     });
 
-  state.users.forEach((user) => {
-    const hasCourse = Array.isArray(user.enrolledCourses) && user.enrolledCourses.includes(state.courseId);
-    if (!hasCourse) return;
-
-    const existing = rows.get(user.id);
-    if (existing) {
-      existing.status = "active";
-      existing.userName = existing.userName || user.name || user.email || user.id;
-      existing.userEmail = existing.userEmail || user.email || "";
-      return;
-    }
-
-    rows.set(user.id, {
-      id: `${user.id}_${state.courseId}`,
-      userId: user.id,
-      userName: user.name || user.email || user.id,
-      userEmail: user.email || "",
-      status: "active",
-      enrolledAt: null,
-      certificateIssued: false,
-      hasEnrollmentDoc: false,
-    });
-  });
-
   return [...rows.values()].sort((a, b) => String(a.userName).localeCompare(String(b.userName)));
 }
 
@@ -611,6 +588,7 @@ function resetLessonForm() {
   if ($("[data-lesson-edit-id]")) $("[data-lesson-edit-id]").value = "";
   if ($("[data-lesson-type]")) $("[data-lesson-type]").value = "text";
   if ($("[data-lesson-order]")) $("[data-lesson-order]").value = "1";
+  if ($("[data-lesson-duration]")) $("[data-lesson-duration]").value = "";
   if ($("[data-lesson-published]")) $("[data-lesson-published]").checked = true;
   renderLessonPreview(null);
   syncLessonTypeFields();
@@ -646,6 +624,7 @@ function openLessonModal(moduleId, lessonId = null, type = null) {
     $("[data-lesson-content]").value = lesson.content || "";
     $("[data-lesson-media-url]").value = lesson.mediaUrl || "";
     $("[data-lesson-order]").value = lesson.order ?? 1;
+    $("[data-lesson-duration]").value = lesson.durationMinutes ?? "";
     $("[data-lesson-published]").checked = lesson.published !== false;
     renderLessonPreview(lesson);
     setMessage(els.lessonMessage, `Editando aula: ${lesson.title || lesson.id}`, "muted");
@@ -664,6 +643,7 @@ function getLessonFormData() {
     content: $("[data-lesson-content]").value.trim(),
     mediaUrl: $("[data-lesson-media-url]").value.trim(),
     order: $("[data-lesson-order]").value,
+    durationMinutes: optionalNumber($("[data-lesson-duration]").value),
     published: $("[data-lesson-published]").checked,
   };
 }
@@ -672,6 +652,7 @@ function validateLesson(lesson) {
   if (!lesson.title) return "Título obrigatório.";
   if (lesson.type === "text" && !lesson.content) return "Conteúdo obrigatório para aula de texto.";
   if (lesson.type !== "text" && !lesson.mediaUrl) return "URL externa obrigatória para este tipo de aula.";
+  if (lesson.mediaUrl && !safeHttpUrl(lesson.mediaUrl)) return "Use uma URL HTTPS válida, sem usuário ou senha embutidos.";
   return "";
 }
 
@@ -988,13 +969,13 @@ async function loadUsers() {
 }
 
 async function loadEnrollments() {
-  const snapshot = await getDocs(collection(db, "enrollments"));
+  const snapshot = await getDocs(query(collection(db, "enrollments"), where("courseId", "==", state.courseId)));
   state.enrollments = snapshot.docs.map((enrollmentDoc) => ({ id: enrollmentDoc.id, ...enrollmentDoc.data() }));
   renderEnrollments();
 }
 
 async function loadProgress() {
-  const snapshot = await getDocs(collection(db, "progress"));
+  const snapshot = await getDocs(query(collection(db, "progress"), where("courseId", "==", state.courseId)));
   state.progress = snapshot.docs
     .map((progressDoc) => ({ id: progressDoc.id, ...progressDoc.data() }))
     .filter((item) => item.courseId === state.courseId);
@@ -1086,7 +1067,8 @@ async function enrollStudent(event) {
   const enrollmentId = `${userId}_${state.courseId}`;
 
   try {
-    await setDoc(
+    const batch = writeBatch(db);
+    batch.set(
       doc(db, "enrollments", enrollmentId),
       {
         userId,
@@ -1103,10 +1085,8 @@ async function enrollStudent(event) {
       { merge: true }
     );
 
-    await updateDoc(doc(db, "users", userId), {
-      enrolledCourses: arrayUnion(state.courseId),
-      updatedAt: serverTimestamp(),
-    });
+    batch.update(doc(db, "users", userId), { updatedAt: serverTimestamp() });
+    await batch.commit();
 
     setMessage(els.enrollmentMessage, "Aluno matriculado com sucesso.");
     els.enrollmentForm?.reset();
@@ -1125,7 +1105,8 @@ async function toggleStudentAccess(userId) {
   const enrollmentId = `${userId}_${state.courseId}`;
 
   try {
-    await setDoc(
+    const batch = writeBatch(db);
+    batch.set(
       doc(db, "enrollments", enrollmentId),
       {
         userId,
@@ -1139,10 +1120,8 @@ async function toggleStudentAccess(userId) {
       { merge: true }
     );
 
-    await updateDoc(doc(db, "users", userId), {
-      enrolledCourses: shouldActivate ? arrayUnion(state.courseId) : arrayRemove(state.courseId),
-      updatedAt: serverTimestamp(),
-    });
+    batch.update(doc(db, "users", userId), { updatedAt: serverTimestamp() });
+    await batch.commit();
 
     setMessage(els.enrollmentMessage, shouldActivate ? "Acesso reativado." : "Acesso removido.");
     await Promise.all([loadUsers(), loadEnrollments()]);
@@ -1154,12 +1133,19 @@ async function toggleStudentAccess(userId) {
 async function savePricing(event) {
   event.preventDefault();
 
+  const paymentInput = $("[data-payment-link]").value.trim();
+  const paymentLink = safeHttpUrl(paymentInput);
+  if (paymentInput && !paymentLink) {
+    setMessage(els.pricingMessage, "O link de pagamento deve ser uma URL HTTPS válida.", "error");
+    return;
+  }
+
   try {
     await updateDoc(doc(db, "courses", state.courseId), {
       price: toNumber($("[data-price]").value, 0),
       salePrice: optionalNumber($("[data-sale-price]").value),
       currency: ($("[data-currency]").value.trim() || "BRL").toUpperCase(),
-      paymentLink: $("[data-payment-link]").value.trim(),
+      paymentLink,
       active: $("[data-price-active]").checked,
       visible: $("[data-price-visible]").checked,
       updatedAt: serverTimestamp(),
@@ -1172,7 +1158,7 @@ async function savePricing(event) {
 }
 
 async function loadCertificates() {
-  const snapshot = await getDocs(collection(db, "certificates"));
+  const snapshot = await getDocs(query(collection(db, "certificates"), where("courseId", "==", state.courseId)));
   state.certificates = snapshot.docs
     .map((certificateDoc) => ({ id: certificateDoc.id, ...certificateDoc.data() }))
     .filter((certificate) => certificate.courseId === state.courseId);

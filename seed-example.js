@@ -40,7 +40,6 @@ batch.set(doc(db, "users", studentUid), {
   email: "email@email.com",
   // Roles validas: admin, mod, estudante.
   role: "estudante",
-  enrolledCourses: [courseId],
   active: true,
   createdAt: serverTimestamp(),
 });

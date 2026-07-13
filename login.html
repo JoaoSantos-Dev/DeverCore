@@ -36,11 +36,15 @@
           </div>
           <div class="app-field">
             <label for="password">Senha</label>
-            <input id="password" type="password" autocomplete="current-password" required data-password />
+            <div class="password-field">
+              <input id="password" type="password" autocomplete="current-password" required data-password />
+              <button type="button" class="password-toggle" aria-label="Mostrar senha" aria-pressed="false" data-password-toggle>Mostrar</button>
+            </div>
           </div>
           <button class="app-button app-button-primary" type="submit" data-login-submit>
             Entrar
           </button>
+          <button class="auth-text-button" type="button" data-password-reset>Esqueci minha senha</button>
           <p class="app-message" id="login-message" role="status" aria-live="polite" data-login-message></p>
         </form>
 

@@ -236,6 +236,13 @@ input {
   gap: 16px;
 }
 
+.password-field { display: flex; gap: 0.5rem; }
+.password-field input { flex: 1; min-width: 0; }
+.password-toggle, .auth-text-button { color: inherit; background: transparent; border: 1px solid var(--line); cursor: pointer; }
+.password-toggle { padding: 0 0.8rem; }
+.auth-text-button { border: 0; text-decoration: underline; justify-self: start; padding: 0.25rem 0; }
+.password-toggle:focus-visible, .auth-text-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
 .app-field label {
   display: block;
   margin-bottom: 8px;
@@ -497,7 +504,7 @@ input {
 
 .admin-summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
   min-width: 0;
 }
@@ -673,6 +680,11 @@ input {
   display: grid;
   gap: 12px;
 }
+
+.admin-inline-filter { display: grid; gap: 0.4rem; min-width: 190px; }
+.admin-inline-filter span { font: 700 0.72rem/1 var(--font-mono); text-transform: uppercase; }
+.admin-inline-filter select { min-height: 42px; padding: 0 0.7rem; color: var(--text-main); background: var(--bg-panel); border: 1px solid var(--border); }
+.lead-contact-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 
 .admin-form {
   display: grid;
@@ -1071,6 +1083,24 @@ input {
   min-width: 0;
 }
 
+.course-content-stack { display: grid; gap: 24px; min-width: 0; }
+.course-overview { display: grid; gap: 18px; min-width: 0; padding: 26px; border: 1px solid rgba(216, 210, 200, 0.13); border-left: 4px solid var(--red-duty); background: linear-gradient(180deg, rgba(32, 32, 32, 0.88), rgba(21, 21, 21, 0.92)), var(--bg-panel); box-shadow: 0 22px 64px rgba(0, 0, 0, 0.28); }
+.course-overview[hidden] { display: none; }
+.course-overview-header { display: flex; align-items: start; justify-content: space-between; gap: 24px; padding-bottom: 18px; border-bottom: 1px solid rgba(216, 210, 200, 0.12); }
+.course-overview-header h2 { margin-top: 4px; font-size: clamp(1.6rem, 3vw, 2.35rem); }
+.course-overview-header p:last-child { margin-bottom: 0; color: var(--text-muted); }
+.course-overview-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.course-overview .student-module-block { padding: 18px; }
+.course-overview .student-module-toggle { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.course-overview .student-module-progress { grid-column: 1 / -1; }
+.course-overview .student-lesson-row { grid-template-columns: minmax(150px, 0.55fr) minmax(220px, 1fr) auto; align-items: center; gap: 16px; }
+.course-overview .student-lesson-row small { text-align: right; }
+.lesson-top-nav, .lesson-navigation { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.lesson-top-nav { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(216, 210, 200, 0.12); }
+.lesson-top-nav span { color: var(--text-muted); font: 800 0.72rem/1 var(--font-mono); text-transform: uppercase; }
+.lesson-navigation { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(216, 210, 200, 0.12); }
+.lesson-navigation .app-button { max-width: 48%; }
+
 .course-layout {
   display: grid;
   grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
@@ -1354,6 +1384,12 @@ input {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .course-overview-header { display: grid; }
+  .course-overview-header .app-button { width: 100%; }
+  .course-overview .student-module-toggle { grid-template-columns: 1fr; }
+  .course-overview .student-lesson-row { grid-template-columns: 1fr; gap: 6px; }
+  .course-overview .student-lesson-row small { text-align: left; }
+
   .admin-summary-grid,
   .course-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1407,6 +1443,10 @@ input {
   .app-brand img {
     height: 34px;
   }
+
+  .course-overview { padding: 18px; }
+  .lesson-top-nav, .lesson-navigation { align-items: stretch; flex-direction: column; }
+  .lesson-navigation .app-button { width: 100%; max-width: none; }
 
   .app-nav a,
   .app-nav button {
@@ -1514,3 +1554,6 @@ input {
     padding: 18px;
   }
 }
+
+.legal-page { max-width: 820px; margin-block: 2rem; }
+.legal-page h2 { margin-top: 2rem; }
