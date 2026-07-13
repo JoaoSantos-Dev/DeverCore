@@ -4,6 +4,18 @@ const header = document.querySelector("[data-header]");
 const menuToggle = document.querySelector("[data-menu-toggle]");
 const nav = document.querySelector("[data-nav]");
 const revealItems = document.querySelectorAll("[data-reveal]");
+const course = window.DEVER_COURSE;
+
+if (course) {
+  document.querySelectorAll("[data-course]").forEach((element) => {
+    const key = element.dataset.course;
+    if (key && course[key]) element.textContent = course[key];
+  });
+
+  document.querySelectorAll("[data-enrollment-link]").forEach((link) => {
+    link.setAttribute("href", course.registrationUrl);
+  });
+}
 
 function setHeaderState() {
   if (!header) return;

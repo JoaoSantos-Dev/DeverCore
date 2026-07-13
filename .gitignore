@@ -38,3 +38,6 @@ firebase-export-*/
 tmp/
 coverage/
 *.log
+
+# Originais de mídia locais; o site publica somente versões otimizadas em public/assets/images/
+IMGS/
