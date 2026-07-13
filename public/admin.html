@@ -24,6 +24,10 @@
         </a>
         <nav class="app-nav" aria-label="Administração">
           <a href="dashboard.html">Dashboard</a>
+          <button class="app-notification" type="button" hidden data-lead-alert aria-label="Pendências de matrícula">
+            <span aria-hidden="true">🔔</span>
+            <span data-lead-alert-count>0</span>
+          </button>
           <button type="button" data-logout>Sair</button>
         </nav>
       </div>
@@ -209,7 +213,7 @@
                 <span>Filtrar por status</span>
                 <select data-lead-filter>
                   <option value="all">Todos</option>
-                  <option value="new">Novos</option>
+                  <option value="new" selected>Novos</option>
                   <option value="contacted">Contatados</option>
                   <option value="converted">Convertidos</option>
                   <option value="archived">Arquivados</option>

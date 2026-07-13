@@ -92,10 +92,30 @@ service cloud.firestore {
         && request.resource.data.email is string && request.resource.data.email.size() >= 5 && request.resource.data.email.size() <= 254
         && request.resource.data.whatsapp is string && request.resource.data.whatsapp.size() >= 8 && request.resource.data.whatsapp.size() <= 30
         && request.resource.data.consent == true
-        && request.resource.data.source == "landing-page"
+        && request.resource.data.source in ["landing-page", "turma-pioneira-op-01"]
         && request.resource.data.status == "new"
         && request.resource.data.createdAt == request.time;
-      allow read, update: if isAdmin();
+      allow read: if isAdmin();
+      allow update: if isAdmin()
+        && (
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(["status", "updatedAt"])
+            && request.resource.data.updatedAt == request.time
+            && (
+              (resource.data.status == "new" && request.resource.data.status in ["contacted", "archived"])
+              || (resource.data.status == "contacted" && request.resource.data.status in ["converted", "archived"])
+              || (resource.data.status == "archived" && request.resource.data.status == "new")
+            )
+          )
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(["enrolled", "enrolledAt"])
+            && resource.data.status == "converted"
+            && request.resource.data.status == "converted"
+            && request.resource.data.enrolled == true
+            && request.resource.data.enrolledAt == request.time
+            && (!resource.data.keys().hasAny(["enrolled"]) || resource.data.enrolled == false)
+          )
+        );
       allow delete: if false;
     }
 

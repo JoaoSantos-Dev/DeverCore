@@ -125,6 +125,17 @@ button {
   color: #e5b29a;
 }
 
+.app-nav .app-notification {
+  gap: 7px;
+  border-color: rgba(194, 138, 59, 0.72);
+  background: rgba(194, 138, 59, 0.12);
+  color: var(--amber-metal);
+}
+
+.app-notification[hidden] {
+  display: none;
+}
+
 .app-nav a:hover,
 .app-nav a:focus-visible,
 .app-nav button:hover,
@@ -1213,6 +1224,80 @@ input {
 .student-lesson-list {
   display: grid;
   gap: 8px;
+}
+
+.student-lesson-list[hidden],
+.admin-lesson-list[hidden] {
+  display: none;
+}
+
+.certificate-shell {
+  width: min(calc(100% - 32px), 900px);
+  margin-inline: auto;
+}
+
+.certificate-document {
+  padding: clamp(28px, 6vw, 64px);
+  border: 1px solid rgba(194, 138, 59, 0.5);
+  border-left: 5px solid var(--amber-metal);
+  background: linear-gradient(135deg, rgba(32, 32, 32, 0.96), rgba(13, 13, 13, 0.96));
+  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.certificate-document[hidden] {
+  display: none;
+}
+
+.certificate-document h1 {
+  margin-top: 24px;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+}
+
+.certificate-document h2 {
+  margin: 14px auto 0;
+  color: var(--amber-metal);
+  font-size: clamp(1.7rem, 4vw, 2.8rem);
+}
+
+.certificate-name {
+  margin: 20px 0 0;
+  color: var(--text-main);
+  font-family: var(--font-title);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.certificate-date,
+.certificate-code {
+  margin-top: 24px;
+}
+
+.certificate-code {
+  color: var(--amber-metal);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.certificate-actions {
+  justify-content: center;
+  margin-top: 30px;
+}
+
+@media print {
+  .app-header,
+  .certificate-actions {
+    display: none;
+  }
+
+  .app-body,
+  .certificate-document {
+    color: #111;
+    background: #fff;
+    box-shadow: none;
+  }
 }
 
 .student-lesson-row {

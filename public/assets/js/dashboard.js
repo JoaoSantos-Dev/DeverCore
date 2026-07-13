@@ -25,6 +25,8 @@ const courseList = document.querySelector("[data-course-list]");
 const availableCourseList = document.querySelector("[data-available-course-list]");
 const emptyState = document.querySelector("[data-empty-courses]");
 const emptyAvailable = document.querySelector("[data-empty-available]");
+const certificatePanel = document.querySelector("[data-certificate-panel]");
+const certificateList = document.querySelector("[data-certificate-list]");
 const logoutButtons = document.querySelectorAll("[data-logout]");
 
 logoutButtons.forEach((button) => {
@@ -116,6 +118,45 @@ function createAvailableCourseCard(course) {
   return card;
 }
 
+function formatCertificateDate(value) {
+  if (!value) return "Data de emissão indisponível";
+  const date = typeof value.toDate === "function" ? value.toDate() : new Date(value);
+  if (Number.isNaN(date.getTime())) return "Data de emissão indisponível";
+  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" }).format(date);
+}
+
+function createCertificateCard(certificate) {
+  const card = document.createElement("article");
+  card.className = "course-card available-course-card";
+
+  const eyebrow = document.createElement("span");
+  eyebrow.textContent = "Certificado emitido";
+  const title = document.createElement("strong");
+  title.textContent = certificate.courseTitle || "Curso DEVER";
+  const description = document.createElement("p");
+  description.textContent = `Emitido em ${formatCertificateDate(certificate.issuedAt)}.`;
+  const action = document.createElement("a");
+  action.className = "app-button app-button-primary";
+  action.href = `certificate.html?code=${encodeURIComponent(certificate.id)}`;
+  action.textContent = "Ver certificado";
+
+  card.append(eyebrow, title, description, action);
+  return card;
+}
+
+async function loadCertificates(userId) {
+  if (!certificatePanel || !certificateList) return;
+  certificateList.replaceChildren();
+  const snapshot = await getDocs(query(collection(db, "certificates"), where("userId", "==", userId)));
+  const certificates = snapshot.docs
+    .map((certificateDoc) => ({ id: certificateDoc.id, ...certificateDoc.data() }))
+    .filter((certificate) => certificate.status !== "revoked")
+    .sort((a, b) => (b.issuedAt?.seconds || 0) - (a.issuedAt?.seconds || 0));
+
+  certificatePanel.hidden = certificates.length === 0;
+  certificates.forEach((certificate) => certificateList.appendChild(createCertificateCard(certificate)));
+}
+
 async function loadCourse(courseId) {
   const snapshot = await getDoc(doc(db, "courses", courseId));
   if (!snapshot.exists()) return null;
@@ -198,6 +239,7 @@ async function loadStudentDashboard() {
   if (adminCard) adminCard.hidden = role !== "admin";
 
   await loadEnrolledCourses(enrolledIds);
+  await loadCertificates(user.uid);
   await loadAvailableCourses(enrolledIds);
 }
 

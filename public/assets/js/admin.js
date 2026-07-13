@@ -20,6 +20,7 @@ const state = {
   users: [],
   enrollments: [],
   leads: [],
+  leadView: "",
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -45,6 +46,8 @@ const els = {
   userList: $("[data-admin-user-list]"),
   userState: $("[data-admin-users-state]"),
   leadFilter: $("[data-lead-filter]"),
+  leadAlert: $("[data-lead-alert]"),
+  leadAlertCount: $("[data-lead-alert-count]"),
   leadMessage: $("[data-lead-message]"),
   leadList: $("[data-lead-list]"),
   leadState: $("[data-lead-state]"),
@@ -180,6 +183,36 @@ const leadStatusLabels = {
   archived: "Arquivado",
 };
 
+const leadStatusTransitions = {
+  new: ["contacted", "archived"],
+  contacted: ["converted", "archived"],
+  converted: [],
+  archived: ["new"],
+};
+
+const leadActionLabels = {
+  contacted: "Marcar como contatado",
+  converted: "Converter em aluno",
+  archived: "Arquivar",
+  new: "Recuperar como novo",
+};
+
+function pendingEnrollmentLeads() {
+  return state.leads.filter((lead) => (lead.status || "new") === "converted" && lead.enrolled !== true);
+}
+
+function updateLeadAlerts() {
+  const pendingCount = pendingEnrollmentLeads().length;
+  if (els.leadAlert) {
+    els.leadAlert.hidden = pendingCount === 0;
+    els.leadAlert.setAttribute(
+      "aria-label",
+      `${pendingCount} ${pendingCount === 1 ? "pendência de matrícula" : "pendências de matrícula"}`
+    );
+  }
+  if (els.leadAlertCount) els.leadAlertCount.textContent = String(pendingCount);
+}
+
 async function loadLeads() {
   if (els.leadState) {
     els.leadState.hidden = false;
@@ -191,6 +224,7 @@ async function loadLeads() {
       .map((leadDoc) => ({ id: leadDoc.id, ...leadDoc.data() }))
       .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     renderLeads();
+    updateLeadAlerts();
     updateSummary();
   } catch (error) {
     setStateError(els.leadState, "Erro ao carregar leads.", error);
@@ -200,12 +234,16 @@ async function loadLeads() {
 function renderLeads() {
   if (!els.leadList || !els.leadState) return;
   els.leadList.replaceChildren();
-  const filter = els.leadFilter?.value || "all";
-  const leads = state.leads.filter((lead) => filter === "all" || (lead.status || "new") === filter);
+  const filter = els.leadFilter?.value || "new";
+  const leads = state.leadView === "enrollment-pending"
+    ? pendingEnrollmentLeads()
+    : state.leads.filter((lead) => filter === "all" || (lead.status || "new") === filter);
 
   if (!leads.length) {
     els.leadState.hidden = false;
-    els.leadState.textContent = filter === "all" ? "Nenhum lead cadastrado." : "Nenhum lead com este status.";
+    els.leadState.textContent = state.leadView === "enrollment-pending"
+      ? "Nenhuma pendência de matrícula."
+      : filter === "all" ? "Nenhum lead cadastrado." : "Nenhum lead com este status.";
     return;
   }
 
@@ -215,7 +253,7 @@ function renderLeads() {
     item.className = "admin-course-item compact";
 
     const eyebrow = document.createElement("span");
-    eyebrow.textContent = `${leadStatusLabels[lead.status || "new"] || "Novo"} · ${formatDateTime(lead.createdAt)}`;
+    eyebrow.textContent = `${leadStatusLabels[lead.status || "new"] || "Novo"}${lead.enrolled === true ? " · Matriculado" : ""} · ${formatDateTime(lead.createdAt)}`;
 
     const title = document.createElement("strong");
     title.textContent = lead.name || "Contato sem nome";
@@ -232,8 +270,9 @@ function renderLeads() {
       emailLink.textContent = "Enviar e-mail";
       contactLinks.appendChild(emailLink);
     }
-    const phone = String(lead.whatsapp || "").replace(/\D/g, "");
-    if (phone) {
+    const localPhone = String(lead.whatsapp || "").replace(/\D/g, "");
+    const phone = localPhone.startsWith("55") ? localPhone : `55${localPhone}`;
+    if (localPhone) {
       const whatsappLink = document.createElement("a");
       whatsappLink.className = "app-button";
       whatsappLink.href = `https://wa.me/${phone}`;
@@ -245,10 +284,15 @@ function renderLeads() {
 
     const actions = document.createElement("div");
     actions.className = "admin-actions";
-    Object.entries(leadStatusLabels).forEach(([status, label]) => {
-      if ((lead.status || "new") === status) return;
-      actions.appendChild(createActionButton(label, "leadStatus", `${lead.id}:${status}`));
+    const currentStatus = lead.status || "new";
+    (leadStatusTransitions[currentStatus] || []).forEach((status) => {
+      actions.appendChild(
+        createActionButton(leadActionLabels[status], "leadStatus", `${lead.id}:${status}`)
+      );
     });
+    if (currentStatus === "converted" && lead.enrolled !== true) {
+      actions.appendChild(createActionButton("Marcar como matriculado", "leadEnrolled", lead.id, "app-button-primary"));
+    }
 
     item.append(eyebrow, title, description, contactLinks, actions);
     els.leadList.appendChild(item);
@@ -256,16 +300,35 @@ function renderLeads() {
 }
 
 async function updateLeadStatus(leadId, status) {
-  if (!leadStatusLabels[status]) return;
+  const lead = state.leads.find((item) => item.id === leadId);
+  const currentStatus = lead?.status || "new";
+  if (!leadStatusLabels[status] || !(leadStatusTransitions[currentStatus] || []).includes(status)) {
+    setMessage(els.leadMessage, "Essa alteração de status não é permitida.", "error");
+    return;
+  }
   try {
     await updateDoc(doc(db, "leads", leadId), { status, updatedAt: serverTimestamp() });
-    const lead = state.leads.find((item) => item.id === leadId);
     if (lead) lead.status = status;
     setMessage(els.leadMessage, `Lead marcado como ${leadStatusLabels[status].toLowerCase()}.`);
     renderLeads();
+    updateLeadAlerts();
     updateSummary();
   } catch (error) {
     setError(els.leadMessage, "Erro ao atualizar lead.", error);
+  }
+}
+
+async function markLeadEnrolled(leadId) {
+  const lead = state.leads.find((item) => item.id === leadId);
+  if (!lead || lead.status !== "converted" || lead.enrolled === true) return;
+  try {
+    await updateDoc(doc(db, "leads", leadId), { enrolled: true, enrolledAt: serverTimestamp() });
+    lead.enrolled = true;
+    setMessage(els.leadMessage, "Lead marcado como matriculado.");
+    renderLeads();
+    updateLeadAlerts();
+  } catch (error) {
+    setError(els.leadMessage, "Erro ao confirmar matrícula.", error);
   }
 }
 
@@ -615,10 +678,23 @@ function bindEvents() {
     if (button.dataset.userToggleActive) toggleUserActive(button.dataset.userToggleActive);
   });
 
-  els.leadFilter?.addEventListener("change", renderLeads);
+  els.leadFilter?.addEventListener("change", () => {
+    state.leadView = "";
+    renderLeads();
+  });
+  els.leadAlert?.addEventListener("click", () => {
+    state.leadView = "enrollment-pending";
+    if (els.leadFilter) els.leadFilter.value = "converted";
+    renderLeads();
+    els.leadList?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   els.leadList?.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-lead-status]");
+    const button = event.target.closest("button[data-lead-status], button[data-lead-enrolled]");
     if (!button) return;
+    if (button.dataset.leadEnrolled) {
+      markLeadEnrolled(button.dataset.leadEnrolled);
+      return;
+    }
     const separator = button.dataset.leadStatus.lastIndexOf(":");
     updateLeadStatus(button.dataset.leadStatus.slice(0, separator), button.dataset.leadStatus.slice(separator + 1));
   });
