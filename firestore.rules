@@ -56,7 +56,7 @@ service cloud.firestore {
     match /certificates/{certificateId} {
       allow get, list: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
       allow create, update: if isAdmin();
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     match /progress/{progressId} {

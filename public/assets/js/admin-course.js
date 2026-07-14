@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -1194,11 +1195,41 @@ function renderCertificates() {
     meta.className = "admin-course-meta";
     meta.append(createBadge(certificate.status || "issued"));
 
-    item.append(code, title, description, meta);
+    const actions = document.createElement("div");
+    actions.className = "admin-actions";
+    actions.appendChild(createActionButton("Excluir certificado", "certificateDelete", certificate.id));
+
+    item.append(code, title, description, meta, actions);
     els.certificateList.appendChild(item);
   });
 
   renderEnrollments();
+}
+
+async function deleteCertificate(certificateId) {
+  const certificate = state.certificates.find((item) => item.id === certificateId);
+  if (!certificate) return;
+  if (!window.confirm(`Excluir o certificado ${certificate.certificateCode || certificate.id}? Esta ação não pode ser desfeita.`)) {
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(db, "certificates", certificateId));
+    state.certificates = state.certificates.filter((item) => item.id !== certificateId);
+    const hasRemainingCertificate = state.certificates.some(
+      (item) => item.userId === certificate.userId && item.status !== "revoked"
+    );
+    await setDoc(
+      doc(db, "enrollments", `${certificate.userId}_${state.courseId}`),
+      { certificateIssued: hasRemainingCertificate, updatedAt: serverTimestamp() },
+      { merge: true }
+    );
+    setMessage(els.certificateMessage, "Certificado excluído.");
+    renderCertificates();
+    await loadEnrollments();
+  } catch (error) {
+    setError(els.certificateMessage, "Erro ao excluir certificado.", error);
+  }
 }
 
 async function createCertificate(event) {
@@ -1376,6 +1407,11 @@ function bindEvents() {
   els.enrollmentList?.addEventListener("click", (event) => {
     const button = event.target.closest("button");
     if (button?.dataset.enrollmentToggle) toggleStudentAccess(button.dataset.enrollmentToggle);
+  });
+
+  els.certificateList?.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-certificate-delete]");
+    if (button) deleteCertificate(button.dataset.certificateDelete);
   });
 }
 
