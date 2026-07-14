@@ -68,6 +68,7 @@ const els = {
   modalTitle: $("[data-content-modal-title]"),
   lessonTypePicker: $("[data-lesson-type-picker]"),
   lessonMediaField: $("[data-lesson-media-field]"),
+  lessonCompletionThresholdField: $("[data-lesson-completion-threshold-field]"),
   lessonMediaLabel: $("[data-lesson-media-label]"),
   lessonContentLabel: $("[data-lesson-content-label]"),
   enrollmentForm: $("[data-enrollment-form]"),
@@ -357,6 +358,7 @@ function syncLessonTypeFields() {
   const mediaRequired = type !== "text";
 
   if (els.lessonMediaField) els.lessonMediaField.hidden = !mediaRequired;
+  if (els.lessonCompletionThresholdField) els.lessonCompletionThresholdField.hidden = type !== "video";
   if ($("[data-lesson-media-url]")) $("[data-lesson-media-url]").required = mediaRequired;
   if ($("[data-lesson-content]")) $("[data-lesson-content]").required = type === "text";
   if (els.lessonMediaLabel) {
@@ -680,6 +682,7 @@ function resetLessonForm() {
   if ($("[data-lesson-type]")) $("[data-lesson-type]").value = "text";
   if ($("[data-lesson-order]")) $("[data-lesson-order]").value = "1";
   if ($("[data-lesson-duration]")) $("[data-lesson-duration]").value = "";
+  if ($("[data-lesson-completion-threshold]")) $("[data-lesson-completion-threshold]").value = "";
   if ($("[data-lesson-published]")) $("[data-lesson-published]").checked = true;
   renderLessonPreview(null);
   syncLessonTypeFields();
@@ -716,6 +719,7 @@ function openLessonModal(moduleId, lessonId = null, type = null) {
     $("[data-lesson-media-url]").value = lesson.mediaUrl || "";
     $("[data-lesson-order]").value = lesson.order ?? 1;
     $("[data-lesson-duration]").value = lesson.durationMinutes ?? "";
+    $("[data-lesson-completion-threshold]").value = lesson.completionThresholdMinutes ?? "";
     $("[data-lesson-published]").checked = lesson.published !== false;
     renderLessonPreview(lesson);
     setMessage(els.lessonMessage, `Editando aula: ${lesson.title || lesson.id}`, "muted");
@@ -735,6 +739,7 @@ function getLessonFormData() {
     mediaUrl: $("[data-lesson-media-url]").value.trim(),
     order: $("[data-lesson-order]").value,
     durationMinutes: optionalNumber($("[data-lesson-duration]").value),
+    completionThresholdMinutes: optionalNumber($("[data-lesson-completion-threshold]").value),
     published: $("[data-lesson-published]").checked,
   };
 }
@@ -744,6 +749,9 @@ function validateLesson(lesson) {
   if (lesson.type === "text" && !lesson.content) return "Conteúdo obrigatório para aula de texto.";
   if (lesson.type !== "text" && !lesson.mediaUrl) return "URL externa obrigatória para este tipo de aula.";
   if (lesson.mediaUrl && !safeHttpUrl(lesson.mediaUrl)) return "Use uma URL HTTPS válida, sem usuário ou senha embutidos.";
+  if (lesson.type === "video" && lesson.completionThresholdMinutes && lesson.durationMinutes && lesson.completionThresholdMinutes > lesson.durationMinutes) {
+    return "O minuto para concluir não pode ser maior que a duração estimada.";
+  }
   return "";
 }
 

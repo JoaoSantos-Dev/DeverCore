@@ -42,6 +42,7 @@ const adminReturnLink = document.querySelector("[data-admin-return]");
 const logoutButtons = document.querySelectorAll("[data-logout]");
 
 let youtubeApiPromise = null;
+let stopActiveVideoTracking = null;
 
 logoutButtons.forEach((button) => {
   button.addEventListener("click", logout);
@@ -233,10 +234,30 @@ function ensureYouTubeApi() {
   return youtubeApiPromise;
 }
 
+function getCompletionThresholdSeconds(lesson) {
+  const minutes = Number(lesson.completionThresholdMinutes);
+  return Number.isFinite(minutes) && minutes > 0 ? minutes * 60 : 0;
+}
+
 function setupYouTubeCompletionTracking(containerId, videoId, lesson) {
   if (!videoId || isLessonCompleted(lesson) || !state.canWriteProgress) return;
 
   ensureYouTubeApi().then((YT) => {
+    let checkTimer = null;
+    let completed = false;
+    const thresholdSeconds = getCompletionThresholdSeconds(lesson);
+    const stopTracking = () => {
+      if (checkTimer) window.clearInterval(checkTimer);
+      checkTimer = null;
+    };
+    const completeLesson = () => {
+      if (completed) return;
+      completed = true;
+      stopTracking();
+      markLessonCompleted(lesson, "video_auto");
+    };
+    stopActiveVideoTracking = stopTracking;
+
     new YT.Player(containerId, {
       videoId,
       host: "https://www.youtube-nocookie.com",
@@ -244,8 +265,23 @@ function setupYouTubeCompletionTracking(containerId, videoId, lesson) {
       events: {
         onStateChange(event) {
           if (event.data === YT.PlayerState.ENDED) {
-            markLessonCompleted(lesson, "video_auto");
+            completeLesson();
+            return;
           }
+
+          if (event.data !== YT.PlayerState.PLAYING || !thresholdSeconds || completed) {
+            stopTracking();
+            return;
+          }
+
+          stopTracking();
+          checkTimer = window.setInterval(() => {
+            try {
+              if (event.target.getCurrentTime() >= thresholdSeconds) completeLesson();
+            } catch {
+              stopTracking();
+            }
+          }, 500);
         },
       },
     });
@@ -367,6 +403,8 @@ function renderStudentModules() {
 
 function renderStudentLesson(lesson = state.selectedLesson) {
   if (!lessonContent) return;
+  stopActiveVideoTracking?.();
+  stopActiveVideoTracking = null;
   lessonContent.replaceChildren();
 
   if (!lesson) {
@@ -455,17 +493,24 @@ function renderStudentLesson(lesson = state.selectedLesson) {
   status.className = "lesson-completion";
 
   const statusText = document.createElement("p");
+  const videoRequiresWatchTime = lessonType === "video" && isYouTubeUrl(mediaUrl);
+  const completionThreshold = Number(lesson.completionThresholdMinutes);
   statusText.textContent = completed
     ? "Aula marcada como concluída."
-    : lessonType === "video" && isYouTubeUrl(mediaUrl)
-      ? "Ao finalizar o vídeo, a aula será marcada como concluída automaticamente. O botão manual continua disponível como fallback."
+    : videoRequiresWatchTime && completionThreshold > 0
+      ? "A aula será concluída automaticamente ao atingir " + completionThreshold + " min de vídeo."
+      : videoRequiresWatchTime
+      ? "A aula será marcada como concluída automaticamente ao finalizar o vídeo."
       : "Marque esta aula como concluída quando terminar.";
 
   const button = document.createElement("button");
   button.className = "app-button app-button-primary";
   button.type = "button";
   button.textContent = completed ? "Concluída" : "Marcar como concluída";
-  button.disabled = completed || !state.canWriteProgress;
+  button.disabled = completed || !state.canWriteProgress || videoRequiresWatchTime;
+  if (videoRequiresWatchTime && !completed) {
+    button.title = "Esta aula é concluída automaticamente pelo tempo assistido no vídeo.";
+  }
   button.addEventListener("click", () => markLessonCompleted(lesson, "manual"));
 
   status.append(statusText, button);
