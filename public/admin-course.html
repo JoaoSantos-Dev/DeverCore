@@ -73,6 +73,9 @@
             <button class="admin-tab-button" type="button" data-course-tab-target="certificates">
               Certificados
             </button>
+            <button class="admin-tab-button" type="button" data-course-tab-target="history">
+              Histórico
+            </button>
             <button class="admin-tab-button" type="button" data-course-tab-target="settings">
               Configurações
             </button>
@@ -91,17 +94,27 @@
                 <article class="admin-card admin-summary-card">
                   <span class="status-pill">Módulos</span>
                   <h2 data-summary-modules>0</h2>
-                  <p>Blocos do curso</p>
+                  <p>Ativos / cadastrados</p>
                 </article>
                 <article class="admin-card admin-summary-card">
                   <span class="status-pill">Aulas</span>
                   <h2 data-summary-lessons>0</h2>
-                  <p>Conteúdos cadastrados</p>
+                  <p>Publicadas / cadastradas</p>
                 </article>
                 <article class="admin-card admin-summary-card">
                   <span class="status-pill">Alunos</span>
                   <h2 data-summary-students>0</h2>
                   <p>Matrículas ativas</p>
+                </article>
+                <article class="admin-card admin-summary-card">
+                  <span class="status-pill">Certificados</span>
+                  <h2 data-summary-certificates>0</h2>
+                  <p>Emitidos</p>
+                </article>
+                <article class="admin-card admin-summary-card">
+                  <span class="status-pill">Progresso médio</span>
+                  <h2 data-summary-progress>0%</h2>
+                  <p>Entre alunos ativos</p>
                 </article>
                 <article class="admin-card admin-summary-card">
                   <span class="status-pill">Preço</span>
@@ -196,6 +209,20 @@
               <p class="empty-state" role="status" aria-live="polite" data-enrollment-state>
                 Carregando dados...
               </p>
+              <div class="admin-list-filters" aria-label="Filtrar alunos matriculados">
+                <label>
+                  <span>Buscar aluno</span>
+                  <input type="search" placeholder="Nome ou e-mail" data-enrollment-search />
+                </label>
+                <label>
+                  <span>Status do acesso</span>
+                  <select data-enrollment-filter>
+                    <option value="all">Todos</option>
+                    <option value="active">Ativos</option>
+                    <option value="inactive">Inativos</option>
+                  </select>
+                </label>
+              </div>
               <div class="admin-list" data-enrollment-list></div>
             </section>
 
@@ -266,6 +293,20 @@
                 Carregando dados...
               </p>
               <div class="admin-list" data-certificate-list></div>
+            </section>
+
+            <section class="admin-panel" hidden data-course-panel="history">
+              <div class="admin-panel-header">
+                <div>
+                  <p class="app-kicker">Histórico</p>
+                  <h2>Ações recentes neste curso</h2>
+                  <p>Registros de matrículas, conteúdos, certificados e configurações.</p>
+                </div>
+              </div>
+              <p class="empty-state" role="status" aria-live="polite" data-history-state>
+                Carregando histórico...
+              </p>
+              <div class="admin-list" data-history-list></div>
             </section>
 
             <section class="admin-panel" hidden data-course-panel="settings">

@@ -38,6 +38,7 @@ const lessonContent = document.querySelector("[data-lesson-content]");
 const courseOverview = document.querySelector("[data-course-overview]");
 const continueButton = document.querySelector("[data-continue-course]");
 const stateEl = document.querySelector("[data-course-state]");
+const adminReturnLink = document.querySelector("[data-admin-return]");
 const logoutButtons = document.querySelectorAll("[data-logout]");
 
 let youtubeApiPromise = null;
@@ -622,6 +623,10 @@ async function loadCourseForStudent() {
   state.courseId = getCourseId();
   state.profile = await getUserProfile(state.user.uid);
   const isAdminProfile = normalizeRole(state.profile?.role) === "admin";
+  if (adminReturnLink) {
+    adminReturnLink.hidden = !isAdminProfile || !state.courseId;
+    adminReturnLink.href = `admin-course.html?id=${encodeURIComponent(state.courseId || "")}`;
+  }
   state.canWriteProgress = await hasActiveEnrollment(state.user.uid, state.courseId);
 
   if (!state.courseId || (!isAdminProfile && !state.canWriteProgress)) {

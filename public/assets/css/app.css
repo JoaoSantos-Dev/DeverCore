@@ -679,7 +679,7 @@ input {
 }
 
 .course-summary-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
 .admin-course-list {
@@ -696,6 +696,35 @@ input {
 .admin-inline-filter span { font: 700 0.72rem/1 var(--font-mono); text-transform: uppercase; }
 .admin-inline-filter select { min-height: 42px; padding: 0 0.7rem; color: var(--text-main); background: var(--bg-panel); border: 1px solid var(--border); }
 .lead-contact-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.admin-list-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(216, 210, 200, 0.1);
+  background: rgba(8, 8, 8, 0.22);
+}
+
+.admin-list-filters label {
+  display: grid;
+  gap: 7px;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.admin-list-filters input,
+.admin-list-filters select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(216, 210, 200, 0.16);
+  background: rgba(8, 8, 8, 0.58);
+  color: var(--text-main);
+}
 
 .admin-form {
   display: grid;
@@ -1569,7 +1598,8 @@ input {
 
   .admin-summary-grid,
   .course-summary-grid,
-  .admin-course-nav {
+  .admin-course-nav,
+  .admin-list-filters {
     grid-template-columns: 1fr;
   }
 

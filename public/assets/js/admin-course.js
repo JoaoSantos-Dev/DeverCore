@@ -23,6 +23,7 @@ const state = {
   users: [],
   enrollments: [],
   certificates: [],
+  activities: [],
   progress: [],
   modules: [],
   selectedModuleId: "",
@@ -30,6 +31,8 @@ const state = {
   expandedModules: new Set(),
   modalMode: "",
   draggedModuleId: "",
+  enrollmentSearch: "",
+  enrollmentFilter: "all",
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -47,6 +50,8 @@ const els = {
   summaryModules: $("[data-summary-modules]"),
   summaryLessons: $("[data-summary-lessons]"),
   summaryStudents: $("[data-summary-students]"),
+  summaryCertificates: $("[data-summary-certificates]"),
+  summaryProgress: $("[data-summary-progress]"),
   summaryPrice: $("[data-summary-price]"),
   overviewForm: $("[data-overview-form]"),
   overviewMessage: $("[data-overview-message]"),
@@ -70,6 +75,8 @@ const els = {
   enrollmentMessage: $("[data-enrollment-message]"),
   enrollmentState: $("[data-enrollment-state]"),
   enrollmentList: $("[data-enrollment-list]"),
+  enrollmentSearch: $("[data-enrollment-search]"),
+  enrollmentFilter: $("[data-enrollment-filter]"),
   pricingForm: $("[data-pricing-form]"),
   pricingMessage: $("[data-pricing-message]"),
   certificateForm: $("[data-certificate-form]"),
@@ -77,6 +84,8 @@ const els = {
   certificateMessage: $("[data-certificate-message]"),
   certificateState: $("[data-certificate-state]"),
   certificateList: $("[data-certificate-list]"),
+  historyState: $("[data-history-state]"),
+  historyList: $("[data-history-list]"),
   settingsForm: $("[data-settings-form]"),
   settingsMessage: $("[data-settings-message]"),
 };
@@ -114,6 +123,27 @@ function logAdminError(context, error) {
 function setError(element, context, error) {
   logAdminError(context, error);
   setMessage(element, formatFirebaseError(error), "error");
+}
+
+async function recordActivity(action, details) {
+  if (!state.adminUser || !state.courseId) return;
+
+  try {
+    const activityRef = doc(collection(db, "courseActivities"));
+    const activity = {
+      courseId: state.courseId,
+      action,
+      details,
+      actorId: state.adminUser.uid,
+      actorName: state.adminProfile?.name || state.adminUser.email || "Administrador",
+      createdAt: serverTimestamp(),
+    };
+    await setDoc(activityRef, activity);
+    state.activities.unshift({ ...activity, id: activityRef.id, createdAt: new Date() });
+    renderActivities();
+  } catch (error) {
+    console.warn("[ADMIN-COURSE] Não foi possível registrar a atividade:", error);
+  }
 }
 
 function slugify(value) {
@@ -415,13 +445,70 @@ function getUserCourseProgress(userId) {
 }
 
 function updateSummary() {
-  const lessonCount = state.modules.reduce((total, module) => total + (module.lessons?.length || 0), 0);
-  const activeStudents = getActiveEnrollmentRows().length;
+  const moduleCount = state.modules.length;
+  const activeModuleCount = state.modules.filter((module) => module.active !== false).length;
+  const lessons = state.modules.flatMap((module) => module.lessons || []);
+  const lessonCount = lessons.length;
+  const publishedLessonCount = state.modules.reduce(
+    (total, module) => total + (module.active === false ? 0 : (module.lessons || []).filter((lesson) => lesson.published !== false).length),
+    0
+  );
+  const activeStudents = getActiveEnrollmentRows();
+  const issuedCertificates = state.certificates.filter((certificate) => certificate.status !== "revoked").length;
+  const averageProgress = activeStudents.length
+    ? Math.round(activeStudents.reduce((total, row) => total + getUserCourseProgress(row.userId).percent, 0) / activeStudents.length)
+    : 0;
 
-  if (els.summaryModules) els.summaryModules.textContent = String(state.modules.length);
-  if (els.summaryLessons) els.summaryLessons.textContent = String(lessonCount);
-  if (els.summaryStudents) els.summaryStudents.textContent = String(activeStudents);
+  if (els.summaryModules) els.summaryModules.textContent = `${activeModuleCount}/${moduleCount}`;
+  if (els.summaryLessons) els.summaryLessons.textContent = `${publishedLessonCount}/${lessonCount}`;
+  if (els.summaryStudents) els.summaryStudents.textContent = String(activeStudents.length);
+  if (els.summaryCertificates) els.summaryCertificates.textContent = String(issuedCertificates);
+  if (els.summaryProgress) els.summaryProgress.textContent = `${averageProgress}%`;
   if (els.summaryPrice) els.summaryPrice.textContent = formatCurrency(state.course?.salePrice ?? state.course?.price, state.course?.currency);
+}
+
+function getActivityDate(value) {
+  if (!value) return 0;
+  if (typeof value.toMillis === "function") return value.toMillis();
+  if (value instanceof Date) return value.getTime();
+  return new Date(value).getTime() || 0;
+}
+
+function renderActivities() {
+  if (!els.historyList || !els.historyState) return;
+  els.historyList.replaceChildren();
+
+  if (!state.activities.length) {
+    els.historyState.hidden = false;
+    els.historyState.textContent = "Nenhuma ação registrada ainda neste curso.";
+    return;
+  }
+
+  els.historyState.hidden = true;
+  state.activities.forEach((activity) => {
+    const item = document.createElement("article");
+    item.className = "admin-course-item compact";
+    const action = document.createElement("strong");
+    action.textContent = activity.action || "Ação administrativa";
+    const details = document.createElement("p");
+    details.textContent = activity.details || "Sem detalhes.";
+    const meta = document.createElement("div");
+    meta.className = "admin-course-meta";
+    meta.append(
+      createBadge(activity.actorName || "Administrador"),
+      createBadge(formatDate(activity.createdAt))
+    );
+    item.append(action, details, meta);
+    els.historyList.appendChild(item);
+  });
+}
+
+async function loadActivities() {
+  const snapshot = await getDocs(query(collection(db, "courseActivities"), where("courseId", "==", state.courseId)));
+  state.activities = snapshot.docs
+    .map((activityDoc) => ({ id: activityDoc.id, ...activityDoc.data() }))
+    .sort((a, b) => getActivityDate(b.createdAt) - getActivityDate(a.createdAt));
+  renderActivities();
 }
 
 function renderCourseHeader() {
@@ -474,6 +561,7 @@ async function saveCourseOverview(event) {
       updatedAt: serverTimestamp(),
     });
     setMessage(els.overviewMessage, "Dados do curso salvos.");
+    await recordActivity("Dados do curso atualizados", `Título: ${title}`);
     await loadCourse();
   } catch (error) {
     setError(els.overviewMessage, "Erro ao salvar dados do curso.", error);
@@ -534,6 +622,7 @@ async function saveModule(event) {
     await setDoc(moduleRef, payload, { merge: true });
     const successMessage = editId ? "Módulo salvo com sucesso." : "Módulo criado com sucesso.";
     setMessage(els.moduleMessage, successMessage);
+    await recordActivity(editId ? "Módulo atualizado" : "Módulo criado", title);
     resetModuleForm();
     await loadModules();
     setContentNotice(successMessage);
@@ -553,6 +642,7 @@ async function toggleModuleActive(moduleId) {
       updatedAt: serverTimestamp(),
     });
     setMessage(els.moduleMessage, "Módulo atualizado.");
+    await recordActivity(module.active === false ? "Módulo ativado" : "Módulo ocultado", module.title || moduleId);
     await loadModules();
   } catch (error) {
     setError(els.moduleMessage, "Erro ao atualizar módulo.", error);
@@ -685,6 +775,7 @@ async function saveLesson(event) {
     await setDoc(lessonRef, payload, { merge: true });
     const successMessage = editId ? "Aula salva com sucesso." : "Aula criada com sucesso.";
     setMessage(els.lessonMessage, successMessage);
+    await recordActivity(editId ? "Aula atualizada" : "Aula criada", lesson.title);
     resetLessonForm();
     await loadModules();
     setContentNotice(successMessage);
@@ -704,6 +795,7 @@ async function toggleLessonPublished(moduleId, lessonId) {
       updatedAt: serverTimestamp(),
     });
     setMessage(els.lessonMessage, "Aula atualizada.");
+    await recordActivity(lesson.published === false ? "Aula publicada" : "Aula despublicada", lesson.title || lessonId);
     await loadModules();
   } catch (error) {
     setError(els.lessonMessage, "Erro ao atualizar aula.", error);
@@ -795,6 +887,12 @@ function renderLessonPreview(lesson = getLessonFormData()) {
   }
 }
 
+function getLessonPublicationStatus(module, lesson) {
+  if (module.active === false) return "Indisponível: módulo oculto";
+  if (lesson.published === false) return "Rascunho";
+  return "Publicada";
+}
+
 function renderModules() {
   if (!els.moduleList) return;
   els.moduleList.replaceChildren();
@@ -872,16 +970,15 @@ function renderModules() {
         const lessonTitle = document.createElement("strong");
         lessonTitle.textContent = lesson.title || lesson.id;
         const lessonDescription = document.createElement("p");
+        const publicationStatus = getLessonPublicationStatus(module, lesson);
         lessonDescription.textContent = lesson.mediaUrl
-          ? `${lesson.published === false ? "Rascunho" : "Publicada"} · URL externa cadastrada`
-          : lesson.published === false
-            ? "Rascunho"
-            : "Publicada";
+          ? `${publicationStatus} · URL externa cadastrada`
+          : publicationStatus;
         lessonCopy.append(lessonEyebrow, lessonTitle, lessonDescription);
 
         const lessonMeta = document.createElement("div");
         lessonMeta.className = "admin-course-meta";
-        lessonMeta.append(createBadge(lesson.published === false ? "Não publicada" : "Publicada"));
+        lessonMeta.append(createBadge(publicationStatus));
 
         const lessonActions = document.createElement("div");
         lessonActions.className = "admin-actions";
@@ -941,6 +1038,7 @@ async function saveModuleOrder(nextModules) {
   state.modules = nextModules.map((module, index) => ({ ...module, order: index + 1 }));
   renderModules();
   setContentNotice("Ordem dos módulos atualizada.");
+  await recordActivity("Ordem dos módulos atualizada", "A sequência dos módulos foi reorganizada.");
 }
 
 async function reorderModules(draggedModuleId, targetModuleId) {
@@ -1000,11 +1098,25 @@ function refreshEnrollmentSelects() {
 function renderEnrollments() {
   if (!els.enrollmentList || !els.enrollmentState) return;
   els.enrollmentList.replaceChildren();
-  const rows = getEnrollmentRows();
+  const allRows = getEnrollmentRows();
+  const search = state.enrollmentSearch.trim().toLocaleLowerCase("pt-BR");
+  const rows = allRows.filter((row) => {
+    const matchesSearch = !search || `${row.userName} ${row.userEmail}`.toLocaleLowerCase("pt-BR").includes(search);
+    const matchesStatus = state.enrollmentFilter === "all" || row.status === state.enrollmentFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  if (!allRows.length) {
+    els.enrollmentState.hidden = false;
+    els.enrollmentState.textContent = "Nenhum aluno matriculado neste curso.";
+    updateSummary();
+    refreshEnrollmentSelects();
+    return;
+  }
 
   if (!rows.length) {
     els.enrollmentState.hidden = false;
-    els.enrollmentState.textContent = "Nenhum aluno matriculado neste curso.";
+    els.enrollmentState.textContent = "Nenhum aluno encontrado com estes filtros.";
     updateSummary();
     refreshEnrollmentSelects();
     return;
@@ -1090,6 +1202,7 @@ async function enrollStudent(event) {
     await batch.commit();
 
     setMessage(els.enrollmentMessage, "Aluno matriculado com sucesso.");
+    await recordActivity("Aluno matriculado", user.name || user.email || user.id);
     els.enrollmentForm?.reset();
     await Promise.all([loadUsers(), loadEnrollments()]);
   } catch (error) {
@@ -1104,6 +1217,9 @@ async function toggleStudentAccess(userId) {
 
   const shouldActivate = row.status === "inactive";
   const enrollmentId = `${userId}_${state.courseId}`;
+  if (!shouldActivate && !window.confirm(`Remover o acesso de ${row.userName || row.userEmail || userId}? O progresso será preservado, mas o aluno não poderá acessar o curso.`)) {
+    return;
+  }
 
   try {
     const batch = writeBatch(db);
@@ -1125,6 +1241,7 @@ async function toggleStudentAccess(userId) {
     await batch.commit();
 
     setMessage(els.enrollmentMessage, shouldActivate ? "Acesso reativado." : "Acesso removido.");
+    await recordActivity(shouldActivate ? "Acesso de aluno reativado" : "Acesso de aluno removido", row.userName || row.userEmail || userId);
     await Promise.all([loadUsers(), loadEnrollments()]);
   } catch (error) {
     setError(els.enrollmentMessage, "Erro ao atualizar acesso.", error);
@@ -1152,6 +1269,7 @@ async function savePricing(event) {
       updatedAt: serverTimestamp(),
     });
     setMessage(els.pricingMessage, "Preços salvos.");
+    await recordActivity("Preços atualizados", formatCurrency(optionalNumber($("[data-sale-price]").value) ?? toNumber($("[data-price]").value, 0), ($("[data-currency]").value.trim() || "BRL").toUpperCase()));
     await loadCourse();
   } catch (error) {
     setError(els.pricingMessage, "Erro ao salvar preços.", error);
@@ -1225,6 +1343,7 @@ async function deleteCertificate(certificateId) {
       { merge: true }
     );
     setMessage(els.certificateMessage, "Certificado excluído.");
+    await recordActivity("Certificado excluído", certificate.userName || certificate.certificateCode || certificate.id);
     renderCertificates();
     await loadEnrollments();
   } catch (error) {
@@ -1271,6 +1390,7 @@ async function createCertificate(event) {
     );
 
     setMessage(els.certificateMessage, "Registro de certificado criado.");
+    await recordActivity("Certificado emitido", user.name || user.email || user.id);
     els.certificateForm?.reset();
     await Promise.all([loadCertificates(), loadEnrollments()]);
   } catch (error) {
@@ -1289,6 +1409,7 @@ async function saveSettings(event) {
       updatedAt: serverTimestamp(),
     });
     setMessage(els.settingsMessage, "Configurações salvas.");
+    await recordActivity("Configurações de publicação atualizadas", $("[data-settings-active]").checked ? "Curso ativo" : "Curso inativo");
     await loadCourse();
   } catch (error) {
     setError(els.settingsMessage, "Erro ao salvar configurações.", error);
@@ -1296,6 +1417,10 @@ async function saveSettings(event) {
 }
 
 async function disableCourse() {
+  if (!window.confirm("Desativar e ocultar este curso? Alunos ativos perderão o acesso até que você o reative.")) {
+    return;
+  }
+
   try {
     await updateDoc(doc(db, "courses", state.courseId), {
       active: false,
@@ -1303,6 +1428,7 @@ async function disableCourse() {
       updatedAt: serverTimestamp(),
     });
     setMessage(els.settingsMessage, "Curso desativado e ocultado.");
+    await recordActivity("Curso desativado e ocultado", state.course?.title || state.courseId);
     await loadCourse();
   } catch (error) {
     setError(els.settingsMessage, "Erro ao desativar curso.", error);
@@ -1409,6 +1535,15 @@ function bindEvents() {
     if (button?.dataset.enrollmentToggle) toggleStudentAccess(button.dataset.enrollmentToggle);
   });
 
+  els.enrollmentSearch?.addEventListener("input", () => {
+    state.enrollmentSearch = els.enrollmentSearch.value;
+    renderEnrollments();
+  });
+  els.enrollmentFilter?.addEventListener("change", () => {
+    state.enrollmentFilter = els.enrollmentFilter.value;
+    renderEnrollments();
+  });
+
   els.certificateList?.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-certificate-delete]");
     if (button) deleteCertificate(button.dataset.certificateDelete);
@@ -1448,7 +1583,7 @@ async function initAdminCoursePage() {
 
   try {
     await loadCourse();
-    await Promise.all([loadUsers(), loadModules(), loadEnrollments(), loadCertificates(), loadProgress()]);
+    await Promise.all([loadUsers(), loadModules(), loadEnrollments(), loadCertificates(), loadProgress(), loadActivities()]);
     renderEnrollments();
     renderCertificates();
     refreshEnrollmentSelects();

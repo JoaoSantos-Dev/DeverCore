@@ -59,6 +59,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /courseActivities/{activityId} {
+      allow get, list, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
     match /progress/{progressId} {
       allow get, list: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
       allow create: if validProgress(progressId);
