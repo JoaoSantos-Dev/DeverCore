@@ -15,6 +15,23 @@ if (course) {
   document.querySelectorAll("[data-enrollment-link]").forEach((link) => {
     link.setAttribute("href", course.registrationUrl);
   });
+
+  document.querySelectorAll("[data-lot]").forEach((card) => {
+    const isActive = Boolean(course.activeLot) && card.dataset.lot === course.activeLot;
+    card.classList.toggle("is-active", isActive);
+    const status = card.querySelector("[data-lot-current]");
+    if (status) status.hidden = !isActive;
+  });
+
+  const enrollmentCta =
+    course.activeLot === "second"
+      ? "Garantir vaga por R$ 147"
+      : course.activeLot === "pioneer"
+        ? "Garantir vaga por R$ 97"
+        : "Quero garantir minha vaga";
+  document.querySelectorAll("[data-enrollment-cta]").forEach((element) => {
+    element.textContent = enrollmentCta;
+  });
 }
 
 function setHeaderState() {

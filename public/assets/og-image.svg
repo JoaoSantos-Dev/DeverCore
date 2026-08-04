@@ -1,38 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">DEVER - Turma Pioneira Unity 2D</title>
-  <desc id="desc">Imagem de compartilhamento da landing page da DEVER.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
-    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0" stop-color="#23120f"/>
-      <stop offset=".44" stop-color="#0d0d0d"/>
-      <stop offset="1" stop-color="#151515"/>
+    <pattern id="grid" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#d8d2c8" opacity=".08"/>
+    </pattern>
+    <linearGradient id="glow" x1="0" x2="1">
+      <stop offset="0" stop-color="#53231d" stop-opacity=".7"/>
+      <stop offset=".5" stop-color="#0d0d0d" stop-opacity="0"/>
     </linearGradient>
-    <pattern id="grain" width="8" height="8" patternUnits="userSpaceOnUse">
-      <circle cx="1" cy="1" r="1" fill="#d8d2c8" opacity=".12"/>
-    </pattern>
-    <pattern id="stripes" width="38" height="38" patternUnits="userSpaceOnUse" patternTransform="rotate(135)">
-      <rect width="12" height="38" fill="#8e2f23" opacity=".7"/>
-      <rect x="12" width="26" height="38" fill="#151515" opacity=".95"/>
-    </pattern>
   </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect width="1200" height="630" fill="url(#grain)" opacity=".38"/>
-  <rect x="0" y="0" width="1200" height="630" fill="none" stroke="#4A403A" stroke-width="2"/>
-  <rect x="760" y="520" width="360" height="16" fill="url(#stripes)" opacity=".7"/>
-  <g transform="translate(92 72)">
-    <g transform="scale(1.15)">
-      <path d="M32 2 56 15.5v33L32 62 8 48.5v-33L32 2Z" fill="none" stroke="#D8D2C8" stroke-width="2.6"/>
-      <path d="M22 18h12.7c8.8 0 14.8 5.8 14.8 14s-6 14-14.8 14H22V18Z" fill="none" stroke="#D8D2C8" stroke-width="5.8" stroke-linejoin="bevel"/>
-      <path d="M22 18v28" stroke="#0D0D0D" stroke-width="6.4"/>
-      <path d="M17 24.5 31.5 31 17 37.5v-13Z" fill="#D8D2C8"/>
-      <path d="m26.2 51 22.4-12.9v9.7L32 57.2 16.8 49l9.4 2Z" fill="#A6402D"/>
-    </g>
-    <text x="92" y="56" fill="#D8D2C8" font-family="Barlow Condensed, Arial Narrow, Impact, sans-serif" font-size="64" font-weight="800">DEVER</text>
-    <path d="M94 73h160" stroke="#A6402D" stroke-width="3"/>
+  <rect width="1200" height="630" fill="#0d0d0d"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="1" y="1" width="1198" height="628" fill="none" stroke="#4a403a"/>
+
+  <g transform="translate(78 62)">
+    <path d="M0 17 35 0l35 19v40L35 78 0 59Z" fill="none" stroke="#d8d2c8" stroke-width="5"/>
+    <path d="M18 23h20c14 0 23 8 23 18s-9 18-23 18H18Z" fill="none" stroke="#d8d2c8" stroke-width="6"/>
+    <path d="m17 65 43-24v15L30 73Z" fill="#a6402d"/>
+    <text x="94" y="59" fill="#d8d2c8" font-family="DejaVu Sans, sans-serif" font-size="54" font-weight="800">DEVER</text>
+    <rect x="95" y="73" width="160" height="4" fill="#a6402d"/>
   </g>
-  <text x="92" y="240" fill="#C28A3B" font-family="IBM Plex Mono, Consolas, monospace" font-size="22" font-weight="700">TURMA PIONEIRA · OP-01 · UNITY 2D</text>
-  <text x="92" y="334" fill="#D8D2C8" font-family="Barlow Condensed, Arial Narrow, Impact, sans-serif" font-size="78" font-weight="800">CRIE SEU PRIMEIRO</text>
-  <text x="92" y="420" fill="#D8D2C8" font-family="Barlow Condensed, Arial Narrow, Impact, sans-serif" font-size="78" font-weight="800">JOGO 2D NA UNITY.</text>
-  <text x="92" y="500" fill="#9A948A" font-family="IBM Plex Sans, Inter, sans-serif" font-size="28">Cinco encontros ao vivo para iniciantes.</text>
-  <text x="92" y="550" fill="#C28A3B" font-family="IBM Plex Mono, Consolas, monospace" font-size="24" font-weight="700">INÍCIO: 05 SET 2026 · R$ 97</text>
+
+  <text x="78" y="205" fill="#c28a3b" font-family="DejaVu Sans Mono, monospace" font-size="22" font-weight="700">TURMA PIONEIRA · 15 VAGAS</text>
+  <text x="78" y="282" fill="#d8d2c8" font-family="DejaVu Sans, sans-serif" font-size="66" font-weight="800">IA PARA GAMEDEV</text>
+  <text x="78" y="355" fill="#d8d2c8" font-family="DejaVu Sans, sans-serif" font-size="48" font-weight="800">CRIE E PUBLIQUE SEU JOGO DO ZERO.</text>
+  <text x="78" y="420" fill="#968f87" font-family="DejaVu Sans, sans-serif" font-size="28">RPG 3D · UNITY + IA · ITCH.IO</text>
+
+  <g transform="translate(78 492)">
+    <rect width="360" height="68" fill="#a6402d"/>
+    <text x="24" y="44" fill="#160b08" font-family="DejaVu Sans Mono, monospace" font-size="24" font-weight="700">A PARTIR DE R$ 97</text>
+    <text x="398" y="44" fill="#c28a3b" font-family="DejaVu Sans Mono, monospace" font-size="24" font-weight="700">SETEMBRO · 2026</text>
+  </g>
+  <g transform="translate(900 520)" fill="#a6402d" opacity=".7">
+    <path d="M0 0h24l18 18H18Z"/><path d="M62 0h24l18 18H80Z"/><path d="M124 0h24l18 18h-24Z"/><path d="M186 0h24l18 18h-24Z"/>
+  </g>
 </svg>

@@ -97,7 +97,7 @@ service cloud.firestore {
         && request.resource.data.email is string && request.resource.data.email.size() >= 5 && request.resource.data.email.size() <= 254
         && request.resource.data.whatsapp is string && request.resource.data.whatsapp.size() >= 8 && request.resource.data.whatsapp.size() <= 30
         && request.resource.data.consent == true
-        && request.resource.data.source in ["landing-page", "turma-pioneira-op-01"]
+        && request.resource.data.source in ["landing-page", "turma-pioneira-op-01", "ia-gamedev-turma-pioneira"]
         && request.resource.data.status == "new"
         && request.resource.data.createdAt == request.time;
       allow read: if isAdmin();

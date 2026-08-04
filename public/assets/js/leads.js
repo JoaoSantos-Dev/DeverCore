@@ -5,8 +5,46 @@ const form = document.querySelector("[data-form]");
 const message = document.querySelector("[data-form-message]");
 const submit = form?.querySelector("[type=submit]");
 const whatsappInput = form?.querySelector("[name=whatsapp]");
+const formContent = form?.querySelector("[data-form-content]");
+const successState = form?.querySelector("[data-form-success]");
+const whatsappGroupLink = form?.querySelector("[data-whatsapp-group]");
+const groupLinkNote = form?.querySelector("[data-group-link-note]");
 const loadedAt = Date.now();
 let isSubmitting = false;
+
+function getWhatsAppGroupUrl() {
+  const value = String(window.DEVER_COURSE?.whatsappGroupUrl || "").trim();
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "chat.whatsapp.com" && url.pathname.length > 1
+      ? url.href
+      : "";
+  } catch {
+    return "";
+  }
+}
+
+function showSuccessState() {
+  const groupUrl = getWhatsAppGroupUrl();
+  if (formContent) formContent.hidden = true;
+  if (successState) {
+    successState.hidden = false;
+    successState.focus({ preventScroll: true });
+  }
+  if (whatsappGroupLink) {
+    if (groupUrl) {
+      whatsappGroupLink.href = groupUrl;
+      whatsappGroupLink.removeAttribute("aria-disabled");
+      whatsappGroupLink.classList.remove("is-disabled");
+    } else {
+      whatsappGroupLink.removeAttribute("href");
+      whatsappGroupLink.setAttribute("aria-disabled", "true");
+      whatsappGroupLink.classList.add("is-disabled");
+    }
+  }
+  if (groupLinkNote) groupLinkNote.hidden = Boolean(groupUrl);
+  successState?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
 
 function formatWhatsApp(value) {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -54,12 +92,13 @@ form?.addEventListener("submit", async (event) => {
       email,
       whatsapp,
       consent: true,
-      source: "turma-pioneira-op-01",
+      source: "ia-gamedev-turma-pioneira",
       status: "new",
       createdAt: serverTimestamp(),
     });
     form.reset();
-    setMessage("Cadastro recebido. Você receberá as orientações de inscrição pelos dados informados.", "success");
+    setMessage("Cadastro realizado.", "success");
+    showSuccessState();
   } catch (error) {
     console.error("[LEADS] Falha ao gravar no Firestore:", error?.code || error, error?.message || "");
     setMessage("Não foi possível registrar seu interesse agora. Tente novamente em instantes.", "error");
