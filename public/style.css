@@ -1587,11 +1587,65 @@ button {
 }
 
 .method-panel .tool-stack {
-  margin-top: 16px;
+  grid-column: 1 / -1;
+  margin-top: -12px;
   color: var(--amber-metal);
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 800;
+}
+
+.project-shot {
+  min-width: 0;
+  margin: 0;
+}
+
+.media-frame {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+}
+
+.media-frame img,
+.media-frame video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.hero-showcase {
+  grid-column: 1 / -1;
+  margin-bottom: 16px;
+}
+
+.project-gallery,
+.method-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px 32px;
+}
+
+.project-gallery {
+  margin-block: 40px 48px;
+}
+
+.method-gallery {
+  grid-column: 1 / -1;
+}
+
+.project-shot figcaption {
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.jam-panel .jam-deadline {
+  margin-top: 14px;
+  font-size: 0.88rem;
 }
 
 .compact-format .format-card {
@@ -1965,11 +2019,6 @@ button {
   pointer-events: none;
 }
 
-.group-link-note {
-  color: #e0926c !important;
-  font-size: 0.84rem;
-}
-
 @keyframes pulse {
   70% {
     box-shadow: 0 0 0 11px rgba(194, 138, 59, 0);
@@ -2291,6 +2340,12 @@ button {
   .support-points,
   .pricing-grid {
     grid-template-columns: 1fr;
+  }
+
+  .project-gallery,
+  .method-gallery {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 
   .course-format-flow .format-card,

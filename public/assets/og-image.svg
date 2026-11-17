@@ -24,12 +24,12 @@
   <text x="78" y="205" fill="#c28a3b" font-family="DejaVu Sans Mono, monospace" font-size="22" font-weight="700">TURMA PIONEIRA · 15 VAGAS</text>
   <text x="78" y="282" fill="#d8d2c8" font-family="DejaVu Sans, sans-serif" font-size="66" font-weight="800">IA PARA GAMEDEV</text>
   <text x="78" y="355" fill="#d8d2c8" font-family="DejaVu Sans, sans-serif" font-size="48" font-weight="800">CRIE E PUBLIQUE SEU JOGO DO ZERO.</text>
-  <text x="78" y="420" fill="#968f87" font-family="DejaVu Sans, sans-serif" font-size="28">RPG 3D · UNITY + IA · ITCH.IO</text>
+  <text x="78" y="420" fill="#968f87" font-family="DejaVu Sans, sans-serif" font-size="28">JOGO 3D · UNITY + IA · ITCH.IO</text>
 
   <g transform="translate(78 492)">
     <rect width="360" height="68" fill="#a6402d"/>
     <text x="24" y="44" fill="#160b08" font-family="DejaVu Sans Mono, monospace" font-size="24" font-weight="700">A PARTIR DE R$ 97</text>
-    <text x="398" y="44" fill="#c28a3b" font-family="DejaVu Sans Mono, monospace" font-size="24" font-weight="700">SETEMBRO · 2026</text>
+    <text x="398" y="44" fill="#c28a3b" font-family="DejaVu Sans Mono, monospace" font-size="24" font-weight="700">DEZEMBRO · 2026</text>
   </g>
   <g transform="translate(900 520)" fill="#a6402d" opacity=".7">
     <path d="M0 0h24l18 18H18Z"/><path d="M62 0h24l18 18H80Z"/><path d="M124 0h24l18 18h-24Z"/><path d="M186 0h24l18 18h-24Z"/>

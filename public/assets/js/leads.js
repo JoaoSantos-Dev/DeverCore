@@ -8,7 +8,6 @@ const whatsappInput = form?.querySelector("[name=whatsapp]");
 const formContent = form?.querySelector("[data-form-content]");
 const successState = form?.querySelector("[data-form-success]");
 const whatsappGroupLink = form?.querySelector("[data-whatsapp-group]");
-const groupLinkNote = form?.querySelector("[data-group-link-note]");
 const loadedAt = Date.now();
 let isSubmitting = false;
 
@@ -32,19 +31,15 @@ function showSuccessState() {
     successState.focus({ preventScroll: true });
   }
   if (whatsappGroupLink) {
-    if (groupUrl) {
-      whatsappGroupLink.href = groupUrl;
-      whatsappGroupLink.removeAttribute("aria-disabled");
-      whatsappGroupLink.classList.remove("is-disabled");
-    } else {
-      whatsappGroupLink.removeAttribute("href");
-      whatsappGroupLink.setAttribute("aria-disabled", "true");
-      whatsappGroupLink.classList.add("is-disabled");
-    }
+    whatsappGroupLink.setAttribute("href", groupUrl || "[INSERIR_LINK_DO_GRUPO_WHATSAPP]");
   }
-  if (groupLinkNote) groupLinkNote.hidden = Boolean(groupUrl);
   successState?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
+
+// Evita navegar para o marcador enquanto o convite real não foi preenchido.
+whatsappGroupLink?.addEventListener("click", (event) => {
+  if (!getWhatsAppGroupUrl()) event.preventDefault();
+});
 
 function formatWhatsApp(value) {
   const digits = value.replace(/\D/g, "").slice(0, 11);

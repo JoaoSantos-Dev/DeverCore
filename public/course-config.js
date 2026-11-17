@@ -4,13 +4,13 @@ window.DEVER_COURSE = Object.freeze({
   cohortName: "Turma Pioneira",
   operationCode: "OP-01",
   code: "TURMA PIONEIRA · 15 VAGAS",
-  startDate: "SETEMBRO DE 2026",
-  startDateISO: "2026-09",
-  endDate: "SETEMBRO DE 2026",
-  endDateISO: "2026-09",
-  schedule: "4 sábados · 3h de desenvolvimento + 1h de dúvidas",
+  startDate: "01 DE DEZEMBRO DE 2026",
+  startDateISO: "2026-12-01",
+  endDate: "22 DE DEZEMBRO DE 2026",
+  endDateISO: "2026-12-22",
+  schedule: "4 terças à noite · 19h às 22h",
   liveMeetings: 4,
-  liveMeetingsLabel: "4 sábados ao vivo",
+  liveMeetingsLabel: "4 terças à noite ao vivo",
   duration: "4 semanas",
   liveHours: "16 horas ao vivo",
   preparationModule: "Minicurso preparatório gravado",
@@ -19,8 +19,8 @@ window.DEVER_COURSE = Object.freeze({
   pioneerPriceLabel: "R$ 97",
   secondLotPriceLabel: "R$ 147",
   activeLot: "pioneer", // Troque para "second" quando as cinco primeiras inscrições forem preenchidas.
-  meetingDates: [], // Insira as quatro datas confirmadas no formato YYYY-MM-DD.
-  whatsappGroupUrl: "", // Cole aqui o link completo https://chat.whatsapp.com/... quando o grupo estiver pronto.
+  meetingDates: ["2026-12-01", "2026-12-08", "2026-12-15", "2026-12-22"],
+  whatsappGroupUrl: "[INSERIR_LINK_DO_GRUPO_WHATSAPP]", // Substitua pelo convite https://chat.whatsapp.com/... do grupo.
   registrationUrl: "#contato",
   seats: 15,
 });
