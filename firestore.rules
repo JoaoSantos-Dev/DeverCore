@@ -91,6 +91,16 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/courses/$(request.resource.data.courseId)/modules/$(request.resource.data.moduleId)/lessons/$(request.resource.data.lessonId));
     }
 
+    match /siteVisits/{visitId} {
+      allow create: if request.resource.data.keys().hasAll(["page", "createdAt"])
+        && request.resource.data.keys().hasOnly(["page", "createdAt"])
+        && request.resource.data.page == "/"
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.createdAt == request.time;
+      allow get, list: if isAdmin();
+      allow update, delete: if false;
+    }
+
     match /leads/{leadId} {
       allow create: if request.resource.data.keys().hasOnly(["name", "email", "whatsapp", "consent", "source", "status", "createdAt"])
         && request.resource.data.name is string && request.resource.data.name.size() >= 2 && request.resource.data.name.size() <= 100

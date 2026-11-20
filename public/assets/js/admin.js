@@ -12,6 +12,7 @@ import {
 import { db } from "./firebase.js";
 import { displayRole, getDisplayName, logout, normalizeRole, requireAdmin } from "./auth.js";
 import { safeHttpUrl } from "./url.js";
+import { initSiteAnalytics } from "./site-analytics.js";
 
 const state = {
   adminUser: null,
@@ -733,7 +734,7 @@ async function initAdminPage() {
   if (els.adminDenied) els.adminDenied.hidden = true;
   if (els.adminContent) els.adminContent.hidden = false;
 
-  await Promise.all([loadCourses(), loadUsers(), loadEnrollmentsSummary(), loadLeads()]);
+  await Promise.all([loadCourses(), loadUsers(), loadEnrollmentsSummary(), loadLeads(), initSiteAnalytics()]);
 }
 
 initAdminPage().catch((error) => {

@@ -56,6 +56,24 @@
         </section>
 
         <div class="admin-content" hidden data-admin-content>
+          <section class="admin-panel" aria-labelledby="site-traffic-title" data-site-analytics>
+            <div class="admin-panel-header">
+              <div>
+                <p class="app-kicker">Página inicial</p>
+                <h2 id="site-traffic-title">Acessos ao site</h2>
+              </div>
+              <button class="app-button" type="button" data-traffic-refresh>Atualizar acessos</button>
+            </div>
+            <dl class="site-traffic-grid">
+              <div><dt>Total de acessos</dt><dd data-traffic-total>—</dd></div>
+              <div><dt>Últimas 24 horas</dt><dd data-traffic-day>—</dd></div>
+              <div><dt>Últimos 7 dias</dt><dd data-traffic-week>—</dd></div>
+              <div><dt>Últimos 30 dias</dt><dd data-traffic-month>—</dd></div>
+            </dl>
+            <p class="admin-note">Visualizações registradas da página inicial desde a ativação do contador. Cada abertura ou recarregamento conta um acesso; a mesma pessoa pode aparecer mais de uma vez. Testes locais e visitas à área do aluno não entram na contagem.</p>
+            <p class="app-message" role="status" aria-live="polite" data-traffic-status>Carregando acessos...</p>
+          </section>
+
           <section class="admin-summary-grid" aria-label="Resumo administrativo">
             <article class="admin-card admin-summary-card">
               <span class="status-pill">Cursos</span>

@@ -14,7 +14,7 @@ No GitHub, acesse **Settings > Pages > Build and deployment** e selecione **GitH
 1. Instale a Firebase CLI e autentique a conta proprietária do projeto.
 2. Execute `firebase deploy --only firestore:rules,firestore:indexes`.
 3. No Firebase Authentication, habilite E-mail/senha e adicione `devercore.com` aos domínios autorizados.
-4. Teste login, recuperação de senha, matrícula, abertura do curso, conclusão de aula e formulário de interesse.
+4. Teste login, recuperação de senha, matrícula, abertura do curso, conclusão de aula, acesso ao Grupo VIP e contagem de acessos.
 
 As regras e índices não são publicados automaticamente pelo GitHub Pages. Publique-os sempre que esses arquivos mudarem.
 
@@ -27,11 +27,27 @@ As regras e índices não são publicados automaticamente pelo GitHub Pages. Pub
 
 A coleção `enrollments` é a única fonte de autorização. O campo legado `users.enrolledCourses` pode ser removido dos documentos antigos depois de confirmar que todos possuem uma matrícula `UID_CURSO` ativa.
 
+## Contador de acessos
+
+O painel administrativo mostra o total de visualizações da página inicial e os acessos registrados nas últimas 24 horas, 7 dias e 30 dias. Clique em **Atualizar acessos** para buscar os números mais recentes. A contagem começa na ativação; não há recuperação de acessos anteriores.
+
+Cada abertura ou recarregamento da página inicial de `https://devercore.com` ou `https://www.devercore.com` grava um documento em `siteVisits`, com apenas `page: "/"` e `createdAt` definido pelo servidor. O contador não usa cookies nem armazena nome, e-mail, IP ou identificador de visitante. São visualizações registradas, não pessoas únicas; bloqueadores, falhas de conexão e visitas automatizadas podem afetar os números. Testes locais e páginas da plataforma não são contabilizados.
+
+Antes de publicar a página com o contador, publique as regras:
+
+```sh
+firebase deploy --only firestore:rules --project devercore
+```
+
+Depois publique `public/` pelo fluxo habitual do GitHub Pages. As regras permitem criar somente eventos com o formato esperado e data do servidor, negam alterações e exclusões e reservam a leitura e as agregações aos administradores ativos. Não há documento de total que visitantes possam editar.
+
+As consultas usam `getCountFromServer`, sem baixar todos os eventos e sem necessidade de um índice composto adicional. Cada acesso gera uma gravação no Firestore; as agregações também usam a cota do projeto. Referência: [agregações do Firestore](https://firebase.google.com/docs/firestore/query-data/aggregation-queries).
+
+Para conferir após publicar, abra a página inicial em outra aba e atualize o contador no admin. Se aparecer erro de permissão, confirme a publicação das regras e `role: "admin"`, `active: true` no perfil. Erros aparecem como indisponibilidade, nunca como zero acessos.
+
 ## Leads
 
-Os envios da landing page ficam na coleção `leads`. Exporte-os periodicamente pelo console ou por uma ferramenta local autenticada. Nunca coloque credenciais administrativas no site.
-
-O formulário usa validação, campo-armadilha e regras restritivas, mas uma página pública ainda pode receber spam. Se isso ocorrer, ative Firebase App Check com reCAPTCHA e exija App Check no Firestore depois de validar o fluxo em produção.
+Os contatos antigos permanecem na coleção `leads` e podem ser gerenciados no admin. A landing page atual leva diretamente ao Grupo VIP, sem formulário de captura. Nunca coloque credenciais administrativas no site.
 
 ## Limites e monitoramento
 
