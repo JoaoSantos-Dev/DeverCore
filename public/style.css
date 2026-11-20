@@ -1969,10 +1969,130 @@ button {
   color: var(--amber-metal);
 }
 
-.form-disclaimer {
+.vip-contact-layout {
+  max-width: 820px;
+}
+
+.vip-disclaimer {
   margin-top: 20px;
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+.hero-vip-note {
+  max-width: 54ch;
+  margin: 12px 0 18px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.instructor-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.instructor-links a {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.instructor-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.instructor-links a:hover {
+  color: var(--text-main);
+}
+
+.vip-popup {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 19;
+  width: min(350px, calc(100% - 32px));
+  max-height: calc(100dvh - var(--header-height) - 40px);
+  padding: 22px;
+  overflow-y: auto;
+  border: 1px solid var(--border-strong);
+  border-top: 3px solid var(--orange-burnt);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.vip-popup[hidden] {
+  display: none;
+}
+
+.vip-popup h2 {
+  margin: 0;
+  padding-right: 34px;
+  font-family: var(--font-title);
+  font-size: 1.75rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.vip-popup p {
+  margin: 12px 0 16px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.vip-popup .btn {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  font-size: 0.8125rem;
+}
+
+.vip-popup small {
+  display: block;
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.vip-popup-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.75rem;
+}
+
+.vip-popup-close:hover {
+  color: var(--text-main);
+}
+
+.instructor-links a:focus-visible,
+.final-contact .btn:focus-visible,
+.vip-popup a:focus-visible,
+.vip-popup-close:focus-visible {
+  outline: 2px solid var(--amber-metal);
+  outline-offset: 4px;
+}
+
+body.menu-open .vip-popup {
+  visibility: hidden;
 }
 
 .form-success-state {
@@ -2305,6 +2425,18 @@ button {
 }
 
 @media (max-width: 620px) {
+  .vip-popup {
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    width: auto;
+    padding: 16px;
+  }
+
+  .vip-popup h2 {
+    font-size: 1.5rem;
+  }
+
   .hero h1 {
     font-size: 3rem;
   }

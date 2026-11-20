@@ -12,7 +12,7 @@ window.DEVER_COURSE = Object.freeze({
   liveMeetings: 4,
   liveMeetingsLabel: "4 terças à noite ao vivo",
   duration: "4 semanas",
-  liveHours: "16 horas ao vivo",
+  liveHours: "12 horas ao vivo",
   preparationModule: "Minicurso preparatório gravado",
   price: 97,
   priceLabel: "A partir de R$ 97",
@@ -20,7 +20,7 @@ window.DEVER_COURSE = Object.freeze({
   secondLotPriceLabel: "R$ 147",
   activeLot: "pioneer", // Troque para "second" quando as cinco primeiras inscrições forem preenchidas.
   meetingDates: ["2026-12-01", "2026-12-08", "2026-12-15", "2026-12-22"],
-  whatsappGroupUrl: "[INSERIR_LINK_DO_GRUPO_WHATSAPP]", // Substitua pelo convite https://chat.whatsapp.com/... do grupo.
-  registrationUrl: "#contato",
+  whatsappGroupUrl: "https://chat.whatsapp.com/JEgVjgQt3nZ58LQNpKfWmR?s=sh&p=a&iam=2",
+  registrationUrl: "https://chat.whatsapp.com/JEgVjgQt3nZ58LQNpKfWmR?s=sh&p=a&iam=2",
   seats: 15,
 });

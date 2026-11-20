@@ -12,8 +12,10 @@ if (course) {
     if (key && course[key]) element.textContent = course[key];
   });
 
-  document.querySelectorAll("[data-enrollment-link]").forEach((link) => {
-    link.setAttribute("href", course.registrationUrl);
+  document.querySelectorAll("[data-enrollment-link], [data-whatsapp-group]").forEach((link) => {
+    link.setAttribute("href", course.whatsappGroupUrl);
+    link.setAttribute("target", "_blank");
+    link.setAttribute("rel", "noopener noreferrer");
   });
 
   document.querySelectorAll("[data-lot]").forEach((card) => {
@@ -21,16 +23,6 @@ if (course) {
     card.classList.toggle("is-active", isActive);
     const status = card.querySelector("[data-lot-current]");
     if (status) status.hidden = !isActive;
-  });
-
-  const enrollmentCta =
-    course.activeLot === "second"
-      ? "Garantir vaga por R$ 147"
-      : course.activeLot === "pioneer"
-        ? "Garantir vaga por R$ 97"
-        : "Quero garantir minha vaga";
-  document.querySelectorAll("[data-enrollment-cta]").forEach((element) => {
-    element.textContent = enrollmentCta;
   });
 }
 
@@ -93,6 +85,55 @@ document.querySelectorAll('a[href^="#"]').forEach((link) => {
 
 window.addEventListener("scroll", setHeaderState, { passive: true });
 setHeaderState();
+
+const heroCta = document.querySelector("[data-hero-cta]");
+const vipPopup = document.querySelector("[data-vip-popup]");
+const vipClose = document.querySelector("[data-vip-close]");
+const finalContact = document.querySelector("#contato");
+let vipDismissed = false;
+
+if (heroCta && vipPopup) {
+  function updateVipPopup() {
+    const heroBounds = heroCta.getBoundingClientRect();
+    const contactBounds = finalContact?.getBoundingClientRect();
+    const contactVisible = contactBounds && contactBounds.top < window.innerHeight && contactBounds.bottom > 0;
+    // Não dispara se o CTA ainda estiver abaixo da dobra ao carregar no celular.
+    const heroScrolledPast = window.scrollY > 0 && heroBounds.bottom <= 0;
+    vipPopup.hidden = vipDismissed || !heroScrolledPast || Boolean(contactVisible);
+  }
+
+  function dismissVipPopup() {
+    vipDismissed = true;
+    vipPopup.hidden = true;
+    if (vipPopup.contains(document.activeElement)) heroCta.focus({ preventScroll: true });
+  }
+
+  vipClose?.addEventListener("click", dismissVipPopup);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !vipPopup.hidden) dismissVipPopup();
+  });
+
+  if ("IntersectionObserver" in window) {
+    const vipObserver = new IntersectionObserver(updateVipPopup, { threshold: 0 });
+    vipObserver.observe(heroCta);
+    if (finalContact) vipObserver.observe(finalContact);
+  }
+
+  let vipFramePending = false;
+  function scheduleVipUpdate() {
+    if (vipFramePending) return;
+    vipFramePending = true;
+    window.requestAnimationFrame(() => {
+      vipFramePending = false;
+      updateVipPopup();
+    });
+  }
+
+  window.addEventListener("scroll", scheduleVipUpdate, { passive: true });
+  window.addEventListener("resize", scheduleVipUpdate);
+  window.addEventListener("pageshow", updateVipPopup);
+  updateVipPopup();
+}
 
 if ("IntersectionObserver" in window) {
   const observer = new IntersectionObserver(
